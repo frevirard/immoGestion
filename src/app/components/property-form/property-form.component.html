@@ -1,0 +1,181 @@
+<section class="panel property-crud-page">
+  <div class="section-heading compact">
+    <div>
+      <p class="eyebrow">CRUD biens</p>
+      <h2>Biens enregistrés</h2>
+      <p>Garde la liste visible et ouvre une fiche uniquement au moment de saisir.</p>
+    </div>
+    <div class="section-actions">
+      <span>{{ store.properties().length }} bien(s)</span>
+      <button class="primary-button" type="button" (click)="openCreateProperty()">
+        Ajouter un bien
+      </button>
+    </div>
+  </div>
+
+  <div class="list-stack">
+    @for (property of store.properties(); track property.id) {
+      <article class="entity-row property-management-row" [class.selected]="selectedPropertyId() === property.id">
+        <div class="entity-main">
+          <strong>{{ property.reference }} · {{ property.category }}</strong>
+          <span>
+            {{ property.district }} · {{ formatMoney(property.rent) }} ·
+            {{ store.propertyComposition(property) }}
+          </span>
+          <span>
+            {{ store.getManagerName(property.managerId) }} ·
+            {{ store.getOwnerName(property.ownerId) }} ·
+            {{ propertyStatusLabel(property) }}
+          </span>
+        </div>
+
+        <div class="row-actions">
+          <em [class.locked]="!canDeleteProperty(property)">
+            {{ deleteStatusLabel(property) }}
+          </em>
+          <button class="secondary-button" type="button" (click)="openEditProperty(property)">
+            Modifier
+          </button>
+          <button
+            class="danger-link"
+            type="button"
+            [disabled]="!canDeleteProperty(property)"
+            (click)="deleteProperty(property)"
+          >
+            Supprimer
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <div class="empty-state">
+        Aucun bien enregistré.
+        <button class="secondary-button" type="button" (click)="openCreateProperty()">
+          Créer le premier bien
+        </button>
+      </div>
+    }
+  </div>
+</section>
+
+@if (isPropertyModalOpen()) {
+  <div class="modal-backdrop" role="presentation" (click)="closePropertyModal()">
+    <section
+      class="modal-card property-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="property-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Fiche bien</p>
+          <h2 id="property-modal-title">
+            {{ selectedPropertyId() ? 'Modifier le bien' : 'Ajouter un bien' }}
+          </h2>
+          <p>Composition, loyer, caution, gérant et locateur.</p>
+        </div>
+        <button class="ghost-button" type="button" aria-label="Fermer" (click)="closePropertyModal()">
+          Fermer
+        </button>
+      </header>
+
+      <form class="property-form modal-form" [formGroup]="propertyForm" (ngSubmit)="saveProperty()">
+        <label>
+          Référence
+          <input formControlName="reference" placeholder="ANG-003" />
+        </label>
+        <label>
+          Adresse
+          <input formControlName="address" placeholder="Résidence, cour, immeuble..." />
+        </label>
+        <label>
+          Quartier
+          <input formControlName="district" placeholder="Cocody, Angré..." />
+        </label>
+        <label>
+          Catégorie
+          <select formControlName="category">
+            <option value="Chambre">Chambre</option>
+            <option value="Chambre salon">Chambre salon</option>
+            <option value="Deux chambres salon">Deux chambres salon</option>
+            <option value="Studio">Studio</option>
+            <option value="Appartement">Appartement</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </label>
+        <label>
+          Chambres
+          <input type="number" min="0" formControlName="bedroomCount" />
+        </label>
+        <label>
+          Loyer mensuel
+          <input type="number" min="0" formControlName="rent" />
+        </label>
+        <label>
+          Caution prévue
+          <input type="number" min="0" formControlName="deposit" />
+        </label>
+        <label>
+          Charges
+          <input type="number" min="0" formControlName="charges" />
+        </label>
+        <label>
+          Gérant
+          <select formControlName="managerId">
+            <option value="">Non attribué</option>
+            @for (manager of store.managers(); track manager.id) {
+              <option [value]="manager.id">{{ manager.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Locateur
+          <select formControlName="ownerId">
+            <option value="">Non renseigné</option>
+            @for (owner of store.owners(); track owner.id) {
+              <option [value]="owner.id">{{ owner.fullName }}</option>
+            }
+          </select>
+        </label>
+
+        <fieldset class="feature-list">
+          <legend>Options du bien</legend>
+          <label>
+            <input type="checkbox" formControlName="hasLivingRoom" />
+            Salon
+          </label>
+          <label>
+            <input type="checkbox" formControlName="hasInternalWc" />
+            WC interne
+          </label>
+          <label>
+            <input type="checkbox" formControlName="hasPrivateShower" />
+            Douche
+          </label>
+          <label>
+            <input type="checkbox" formControlName="hasKitchen" />
+            Cuisine
+          </label>
+          <label>
+            <input type="checkbox" formControlName="hasBalcony" />
+            Balcon
+          </label>
+        </fieldset>
+
+        <label class="full-span">
+          Notes
+          <textarea formControlName="notes" rows="3" placeholder="Informations utiles..."></textarea>
+        </label>
+
+        <div class="form-actions full-span">
+          <button class="secondary-button" type="button" (click)="closePropertyModal()">
+            Annuler
+          </button>
+          <button class="primary-button" type="submit">
+            {{ selectedPropertyId() ? 'Enregistrer les modifications' : 'Créer le bien' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}

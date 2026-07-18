@@ -1,0 +1,66 @@
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">{{ formatMonth(selectedMonth) }}</p>
+    <h2>Vue de recouvrement</h2>
+    <p>
+      Suivi des loyers attendus, encaissés, déduits de la caution et restant à récupérer.
+    </p>
+  </div>
+</section>
+
+<section class="kpi-grid" aria-label="Indicateurs du mois">
+  <article>
+    <span>Biens</span>
+    <strong>{{ portfolioStats().total }}</strong>
+  </article>
+  <article>
+    <span>À encaisser</span>
+    <strong>{{ formatMoney(portfolioStats().remainingAmount) }}</strong>
+  </article>
+  <article>
+    <span>Encaissé</span>
+    <strong>{{ formatMoney(portfolioStats().collectedAmount) }}</strong>
+  </article>
+  <article>
+    <span>Déduit caution</span>
+    <strong>{{ formatMoney(portfolioStats().deductedFromDeposit) }}</strong>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="section-heading compact">
+    <h2>Loyers à récupérer par agent</h2>
+    <span>{{ formatMonth(selectedMonth) }}</span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>Biens loués</th>
+          <th>Attendu</th>
+          <th>Encaissé</th>
+          <th>Déduit caution</th>
+          <th>Reste</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (summary of rentSummaries(); track summary.managerId) {
+          <tr>
+            <td>{{ summary.managerName }}</td>
+            <td>{{ summary.occupiedCount }}</td>
+            <td>{{ formatMoney(summary.expectedAmount) }}</td>
+            <td>{{ formatMoney(summary.collectedAmount) }}</td>
+            <td>{{ formatMoney(summary.deductedFromDeposit) }}</td>
+            <td><strong>{{ formatMoney(summary.remainingAmount) }}</strong></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6">Aucun gérant enregistré.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

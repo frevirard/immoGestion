@@ -1,0 +1,88 @@
+<div class="app-shell">
+  <header class="app-navbar">
+    <div class="brand-mark">
+      <span>IP</span>
+      <div>
+        <strong>Immo Parc</strong>
+        <small>Gestion locative</small>
+      </div>
+    </div>
+
+    <div class="navbar-actions">
+      <div class="navbar-user" aria-label="Utilisateur connecté">
+        <span>Connecté en tant que</span>
+        <strong>{{ store.currentUser()?.name }}</strong>
+        <em>{{ isAdmin() ? 'Administrateur' : 'Gérant' }}</em>
+      </div>
+
+      <label class="month-picker navbar-month">
+        Mois suivi
+        <input type="month" [value]="selectedMonth()" (change)="setSelectedMonth($event)" />
+      </label>
+
+      <button class="ghost-button" type="button" (click)="resetDemoData()">
+        Réinitialiser
+      </button>
+      <button class="ghost-button danger" type="button" (click)="logout()">
+        Déconnexion
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <nav class="sidebar-nav" aria-label="Navigation principale">
+      @for (item of navItems(); track item.id) {
+        <button
+          type="button"
+          [class.active]="activePage() === item.id"
+          (click)="setPage(item.id)"
+        >
+          <strong>{{ item.label }}</strong>
+          <span>{{ item.helper }}</span>
+        </button>
+      }
+    </nav>
+  </aside>
+
+  <main class="workspace">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Du spécifique au standard</p>
+        <h1>
+          @switch (activePage()) {
+            @case ('dashboard') { Tableau de bord }
+            @case ('properties') { Biens immobiliers }
+            @case ('add-property') { Ajouter un bien }
+            @case ('managers') { Gérants }
+            @case ('tenants') { Locataires }
+          }
+        </h1>
+      </div>
+
+      @if (notice()) {
+        <p class="notice">{{ notice() }}</p>
+      }
+    </section>
+
+    @switch (activePage()) {
+      @case ('dashboard') {
+        <app-dashboard [selectedMonth]="selectedMonth()" />
+      }
+      @case ('properties') {
+        <app-properties-page
+          [selectedMonth]="selectedMonth()"
+          (notice)="handleNotice($event)"
+        />
+      }
+      @case ('add-property') {
+        <app-property-form (notice)="handleNotice($event)" />
+      }
+      @case ('managers') {
+        <app-managers-page (notice)="handleNotice($event)" />
+      }
+      @case ('tenants') {
+        <app-tenants-page (notice)="handleNotice($event)" />
+      }
+    }
+  </main>
+</div>

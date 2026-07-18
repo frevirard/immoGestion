@@ -1,0 +1,49 @@
+<div class="two-column-page">
+  <section class="panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Agents</p>
+        <h2>Ajouter un gérant</h2>
+      </div>
+    </div>
+
+    <form class="form-stack" [formGroup]="managerForm" (ngSubmit)="createManager()">
+      <label>
+        Nom
+        <input formControlName="name" placeholder="Nom du gérant" />
+      </label>
+      <label>
+        Email
+        <input type="email" formControlName="email" placeholder="gerant@immo.local" />
+      </label>
+      <label>
+        Téléphone
+        <input formControlName="phone" placeholder="+225 ..." />
+      </label>
+      <label>
+        Mot de passe
+        <input type="text" formControlName="password" />
+      </label>
+      <button class="primary-button" type="submit">Créer le gérant</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="section-heading compact">
+      <h2>Liste des gérants</h2>
+      <span>{{ store.managers().length }} compte(s)</span>
+    </div>
+
+    <div class="list-stack">
+      @for (manager of store.managers(); track manager.id) {
+        <article class="entity-row">
+          <div>
+            <strong>{{ manager.name }}</strong>
+            <span>{{ manager.email }} · {{ manager.phone || 'Téléphone non renseigné' }}</span>
+          </div>
+          <em>{{ assignedCount(manager.id) }} bien(s)</em>
+        </article>
+      }
+    </div>
+  </section>
+</div>

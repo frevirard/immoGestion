@@ -1,0 +1,407 @@
+@if (selectedProperty(); as property) {
+  <div class="detail-head">
+    <div>
+      <p class="eyebrow">{{ statusLabel(property) }}</p>
+      <h2>{{ property.reference }}</h2>
+      <p>{{ property.category }} · {{ property.address }} · {{ property.district }}</p>
+    </div>
+    <strong>{{ formatMoney(property.rent) }}</strong>
+  </div>
+
+  <div class="micro-info">
+    <span>{{ store.propertyComposition(property) }}</span>
+    <span>{{ store.getManagerName(property.managerId) }}</span>
+    <span>{{ store.getOwnerName(property.ownerId) }}</span>
+  </div>
+
+  @if (isAdmin()) {
+    <div class="assignment-strip">
+      <label>
+        Gérant
+        <select [value]="property.managerId ?? ''" (change)="assignManager(property.id, $event)">
+          <option value="">Non attribué</option>
+          @for (manager of store.managers(); track manager.id) {
+            <option [value]="manager.id">{{ manager.name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Locateur
+        <select [value]="property.ownerId ?? ''" (change)="assignOwner(property.id, $event)">
+          <option value="">Non renseigné</option>
+          @for (owner of store.owners(); track owner.id) {
+            <option [value]="owner.id">{{ owner.fullName }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
+  <nav class="tabs" aria-label="Dossier du bien">
+    <button type="button" [class.active]="activeTab() === 'tenant'" (click)="setTab('tenant')">
+      Occupation
+    </button>
+    <button
+      type="button"
+      [class.active]="activeTab() === 'payments'"
+      (click)="setTab('payments')"
+      [disabled]="!property.tenantId"
+    >
+      Loyers
+    </button>
+    <button
+      type="button"
+      [class.active]="activeTab() === 'history'"
+      (click)="setTab('history')"
+      [disabled]="!property.tenantId"
+    >
+      Historique
+    </button>
+    <button type="button" [class.active]="activeTab() === 'comments'" (click)="setTab('comments')">
+      Commentaires
+    </button>
+    <button
+      type="button"
+      [class.active]="activeTab() === 'contract'"
+      (click)="setTab('contract')"
+      [disabled]="!property.tenantId"
+    >
+      Contrat
+    </button>
+  </nav>
+
+  @if (activeTab() === 'tenant') {
+    <section class="tab-panel">
+      <form class="form-grid tenant-grid" [formGroup]="tenantForm" (ngSubmit)="saveTenant()">
+        <div class="tenant-heading">
+          <div>
+            <h3>{{ replacingTenant() ? 'Nouveau locataire' : 'Locataire et caution' }}</h3>
+            @if (selectedTenant() && !replacingTenant()) {
+              <p>Occupant actuel : <strong>{{ selectedTenant()?.fullName }}</strong></p>
+            }
+          </div>
+          @if (property.tenantId && !replacingTenant()) {
+            <button class="secondary-button" type="button" (click)="startTenantReplacement()">
+              Changer de locataire
+            </button>
+          }
+          @if (replacingTenant()) {
+            <button class="ghost-button" type="button" (click)="cancelTenantReplacement()">
+              Annuler
+            </button>
+          }
+        </div>
+
+        <label>
+          Nom complet
+          <input formControlName="fullName" placeholder="Nom du locataire" />
+        </label>
+        <label>
+          Téléphone
+          <input formControlName="phone" placeholder="+225 ..." />
+        </label>
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="email@example.com" />
+        </label>
+        <label>
+          Profession
+          <input formControlName="profession" placeholder="Profession" />
+        </label>
+        <label>
+          Pièce d’identité
+          <input formControlName="idDocument" placeholder="CNI, passeport..." />
+        </label>
+        <label>
+          Date d’entrée
+          <input type="date" formControlName="startDate" />
+        </label>
+        <label>
+          Caution prévue
+          <input type="number" min="0" formControlName="depositExpected" />
+        </label>
+        <label>
+          Caution reçue
+          <input type="number" min="0" formControlName="depositPaidAmount" />
+        </label>
+        <label>
+          Date réception caution
+          <input type="date" formControlName="depositPaidAt" />
+        </label>
+        <label>
+          Contact urgence
+          <input formControlName="emergencyContact" placeholder="+225 ..." />
+        </label>
+
+        @if (selectedTenant(); as tenant) {
+          <div class="deposit-card">
+            <span>Solde caution</span>
+            <strong>{{ formatMoney(tenant.depositBalance) }}</strong>
+            <small>Reçue le {{ formatDate(tenant.depositPaidAt) }}</small>
+          </div>
+        }
+
+        <button class="primary-button" type="submit" [disabled]="!canManageTenant(property)">
+          {{
+            replacingTenant()
+              ? 'Enregistrer le nouveau locataire'
+              : property.tenantId
+                ? 'Mettre à jour'
+                : 'Ajouter le locataire'
+          }}
+        </button>
+      </form>
+    </section>
+  }
+
+  @if (activeTab() === 'payments') {
+    <section class="tab-panel">
+      @if (selectedPaymentSnapshot(); as snapshot) {
+        <div class="payment-focus">
+          <div>
+            <span
+              class="payment-pill"
+              [class.paid]="paymentStatusClass(snapshot) === 'PAID'"
+              [class.deducted]="paymentStatusClass(snapshot) === 'DEDUCTED_FROM_DEPOSIT'"
+            >
+              {{ paymentStatusLabel(snapshot) }}
+            </span>
+            <h3>{{ formatMonth(month()) }}</h3>
+          </div>
+          <dl>
+            <div>
+              <dt>Attendu</dt>
+              <dd>{{ formatMoney(snapshot.expectedAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Encaissé</dt>
+              <dd>{{ formatMoney(snapshot.paidAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Déduit caution</dt>
+              <dd>{{ formatMoney(snapshot.deductionAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Reste</dt>
+              <dd>{{ formatMoney(snapshot.remainingAmount) }}</dd>
+            </div>
+          </dl>
+        </div>
+      }
+
+      <div class="money-actions">
+        <form class="mini-form" [formGroup]="paymentForm" (ngSubmit)="markRentPaid()">
+          <h3>Encaisser le loyer</h3>
+          <label>
+            Mois
+            <input type="month" formControlName="month" />
+          </label>
+          <label>
+            Reçu le
+            <input type="date" formControlName="paidAt" />
+          </label>
+          <label>
+            Commentaire
+            <input formControlName="comment" placeholder="Mode de paiement..." />
+          </label>
+          <button class="primary-button" type="submit" [disabled]="!canManageTenant(property)">
+            Marquer encaissé
+          </button>
+        </form>
+
+        <form class="mini-form warning" [formGroup]="deductionForm" (ngSubmit)="deductRentFromDeposit()">
+          <h3>Déduire de la caution</h3>
+          @if (selectedTenant(); as tenant) {
+            <p>Solde disponible : <strong>{{ formatMoney(tenant.depositBalance) }}</strong></p>
+          }
+          <label>
+            Mois impayé
+            <input type="month" formControlName="month" />
+          </label>
+          <label>
+            Note
+            <input formControlName="comment" />
+          </label>
+          <button
+            class="secondary-button"
+            type="submit"
+            [disabled]="!canManageTenant(property) || !canDeductFromDeposit(property)"
+          >
+            Déduire si caution suffisante
+          </button>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mois</th>
+              <th>Statut</th>
+              <th>Encaissé</th>
+              <th>Déduit</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (payment of selectedPaymentHistory(); track payment.id) {
+              <tr>
+                <td>{{ formatMonth(payment.month) }}</td>
+                <td>{{ paymentStatusLabel(payment) }}</td>
+                <td>{{ formatMoney(payment.paidAmount) }}</td>
+                <td>{{ formatMoney(payment.deductionAmount) }}</td>
+                <td>{{ formatDate(payment.paidAt) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5">Aucun encaissement enregistré pour ce bien.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (activeTab() === 'history') {
+    <section class="tab-panel">
+      <div class="history-head">
+        <div>
+          <h3>Historique des loyers</h3>
+          <p>Depuis la date d’entrée de chaque locataire jusqu’à {{ formatMonth(month()) }}.</p>
+        </div>
+        <div class="legend">
+          <span><i class="paid-dot"></i> Encaissé</span>
+          <span><i class="deducted-dot"></i> Déduit caution</span>
+          <span><i class="pending-dot"></i> À encaisser</span>
+        </div>
+      </div>
+
+      <div class="occupancy-strip">
+        @for (occupancy of selectedOccupancyHistory(); track occupancy.id) {
+          <article>
+            <strong>{{ occupancy.tenantName }}</strong>
+            <span>
+              {{ formatDate(occupancy.startedAt) }}
+              —
+              {{ occupancy.endedAt ? formatDate(occupancy.endedAt) : 'en cours' }}
+            </span>
+          </article>
+        }
+      </div>
+
+      <div
+        class="history-chart"
+        role="img"
+        aria-label="Histogramme mensuel des loyers du bien, par locataire et mode de paiement"
+      >
+        @for (point of selectedRentHistory(); track point.occupancyId + '-' + point.month) {
+          <article class="history-column">
+            <div class="bar-frame" [attr.aria-label]="formatMonth(point.month) + ', ' + point.tenantName + ', ' + historyStatusText(point)">
+              <span
+                class="segment remaining"
+                [style.height.%]="historySegmentPercent(point, 'remainingAmount')"
+              ></span>
+              <span
+                class="segment deducted"
+                [style.height.%]="historySegmentPercent(point, 'deductionAmount')"
+              ></span>
+              <span
+                class="segment paid"
+                [style.height.%]="historySegmentPercent(point, 'paidAmount')"
+              ></span>
+            </div>
+            <strong>{{ formatMonthShort(point.month) }}</strong>
+            <span>{{ point.tenantName }}</span>
+            <em>{{ historyStatusText(point) }}</em>
+          </article>
+        } @empty {
+          <div class="empty-state">Aucun historique de location pour ce bien.</div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeTab() === 'comments') {
+    <section class="tab-panel">
+      <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="saveComment()">
+        <label>
+          Commentaire
+          <textarea formControlName="body" rows="3" placeholder="Observation, incident, travaux, état du bien..."></textarea>
+        </label>
+        <label class="file-drop">
+          Ajouter des photos
+          <input type="file" accept="image/*" multiple (change)="onCommentPhotosSelected($event)" />
+        </label>
+
+        @if (pendingCommentPhotos().length) {
+          <div class="photo-grid">
+            @for (photo of pendingCommentPhotos(); track photo.id) {
+              <figure>
+                <img [src]="photo.dataUrl" [alt]="photo.name" />
+                <button type="button" (click)="removePendingPhoto(photo.id)">Retirer</button>
+              </figure>
+            }
+          </div>
+        }
+
+        <button class="primary-button" type="submit" [disabled]="!canManageTenant(property)">
+          Ajouter le commentaire
+        </button>
+      </form>
+
+      <div class="comment-list">
+        @for (comment of selectedComments(); track comment.id) {
+          <article class="comment-card">
+            <header>
+              <strong>{{ comment.authorName }}</strong>
+              <span>{{ formatDateTime(comment.createdAt) }}</span>
+            </header>
+            <p>{{ comment.body }}</p>
+            @if (comment.photos.length) {
+              <div class="photo-grid">
+                @for (photo of comment.photos; track photo.id) {
+                  <figure>
+                    <img [src]="photo.dataUrl" [alt]="photo.name" />
+                    <figcaption>{{ photo.name }}</figcaption>
+                  </figure>
+                }
+              </div>
+            }
+          </article>
+        } @empty {
+          <div class="empty-state">Aucun commentaire sur ce bien.</div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeTab() === 'contract') {
+    <section class="tab-panel">
+      @if (property.tenantId) {
+        <div class="contract-actions">
+          <button class="secondary-button" type="button" (click)="regenerateContract()">
+            Régénérer
+          </button>
+          <button class="secondary-button" type="button" (click)="printContract()">
+            Imprimer
+          </button>
+          <button class="primary-button" type="button" (click)="saveContract()">
+            Enregistrer
+          </button>
+        </div>
+
+        <textarea
+          class="contract-editor"
+          rows="20"
+          [value]="contractDraft()"
+          (input)="updateContractDraft($event)"
+        ></textarea>
+      } @else {
+        <div class="empty-state">Ajoute un locataire pour générer le contrat.</div>
+      }
+    </section>
+  }
+} @else {
+  <div class="empty-state">Sélectionne un bien pour ouvrir son dossier.</div>
+}

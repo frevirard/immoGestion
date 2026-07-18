@@ -1,0 +1,51 @@
+<main class="login-page">
+  <section class="login-card">
+    <div class="brand-mark">
+      <span>IP</span>
+      <div>
+        <strong>Immo Parc</strong>
+        <small>Gestion locative</small>
+      </div>
+    </div>
+
+    <p class="eyebrow">Du spécifique au standard</p>
+    <h1>Un espace clair pour suivre tes biens.</h1>
+    <p class="lead">
+      Connexion par rôle, gestion des biens, locataires, cautions et loyers — en cache local
+      pour cette première version.
+    </p>
+
+    <form class="form-stack" [formGroup]="loginForm" (ngSubmit)="login()">
+      <label>
+        Email
+        <input type="email" formControlName="email" placeholder="admin@immo.local" />
+      </label>
+
+      <label>
+        Mot de passe
+        <input type="password" formControlName="password" placeholder="admin123" />
+      </label>
+
+      @if (loginError()) {
+        <p class="form-error">{{ loginError() }}</p>
+      }
+
+      <button class="primary-button" type="submit">Se connecter</button>
+    </form>
+
+    <div class="demo-box">
+      <p>Comptes de démonstration</p>
+      <div class="demo-actions">
+        <button type="button" (click)="quickLogin('admin@immo.local', 'admin123')">
+          Admin
+        </button>
+        <button type="button" (click)="quickLogin('awa@immo.local', 'gerant123')">
+          Gérante Awa
+        </button>
+        <button type="button" (click)="quickLogin('jean@immo.local', 'gerant123')">
+          Gérant Jean
+        </button>
+      </div>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,62 @@
+<section class="property-toolbar">
+  <div class="segmented-control" aria-label="Filtres des biens">
+    <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">
+      Tous
+    </button>
+    <button type="button" [class.active]="filter() === 'OCCUPIED'" (click)="setFilter('OCCUPIED')">
+      Loués
+    </button>
+    <button type="button" [class.active]="filter() === 'AVAILABLE'" (click)="setFilter('AVAILABLE')">
+      Libres
+    </button>
+  </div>
+</section>
+
+<div class="content-grid">
+  <section class="panel">
+    <div class="section-heading compact">
+      <h2>Parc</h2>
+      <span>{{ visibleProperties().length }} bien(s)</span>
+    </div>
+
+    <div class="property-list">
+      @for (property of visibleProperties(); track property.id) {
+        <article class="property-row" [class.selected]="selectedProperty()?.id === property.id">
+          <button type="button" (click)="selectProperty(property.id)">
+            <span>
+              <strong>{{ property.reference }}</strong>
+              <small>{{ property.category }} · {{ property.district }}</small>
+            </span>
+
+            <span class="row-meta">
+              <strong>{{ formatMoney(property.rent) }}</strong>
+              @if (isOccupied(property)) {
+                @if (store.rentSnapshotForProperty(property, selectedMonth); as snapshot) {
+                  <em
+                    class="payment-pill"
+                    [class.paid]="paymentStatusClass(snapshot) === 'PAID'"
+                    [class.deducted]="paymentStatusClass(snapshot) === 'DEDUCTED_FROM_DEPOSIT'"
+                  >
+                    {{ paymentStatusLabel(snapshot) }}
+                  </em>
+                }
+              } @else {
+                <em class="payment-pill empty">Libre</em>
+              }
+            </span>
+          </button>
+        </article>
+      } @empty {
+        <div class="empty-state">Aucun bien pour ce filtre.</div>
+      }
+    </div>
+  </section>
+
+  <section class="panel detail-panel">
+    <app-property-detail
+      [property]="selectedProperty()"
+      [selectedMonth]="selectedMonth"
+      (notice)="handleNotice($event)"
+    />
+  </section>
+</div>

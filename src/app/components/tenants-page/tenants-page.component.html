@@ -1,0 +1,129 @@
+<section class="panel tenant-crud-page">
+  <div class="section-heading compact">
+    <div>
+      <p class="eyebrow">CRUD locataires</p>
+      <h2>Liste des locataires</h2>
+      <p>Consulte les fiches et ouvre une modale uniquement pour saisir ou modifier.</p>
+    </div>
+    <div class="section-actions">
+      <span>{{ store.tenants().length }} fiche(s)</span>
+      <button class="primary-button" type="button" (click)="openCreateTenant()">
+        Ajouter un locataire
+      </button>
+    </div>
+  </div>
+
+  <div class="list-stack">
+    @for (tenant of store.tenants(); track tenant.id) {
+      <article class="entity-row tenant-management-row" [class.selected]="selectedTenantId() === tenant.id">
+        <div class="entity-main">
+          <strong>{{ tenant.fullName }}</strong>
+          <span>{{ tenant.phone }} · Solde caution {{ formatMoney(tenant.depositBalance) }}</span>
+          <span>
+            Entrée le {{ tenant.startDate }} ·
+            Caution reçue {{ formatMoney(tenant.depositPaidAmount) }}
+          </span>
+        </div>
+
+        <div class="row-actions">
+          <em [class.locked]="!canDeleteTenant(tenant)">{{ attachedLabel(tenant) }}</em>
+          <button class="secondary-button" type="button" (click)="openEditTenant(tenant)">
+            Modifier
+          </button>
+          <button
+            class="danger-link"
+            type="button"
+            [disabled]="!canDeleteTenant(tenant)"
+            (click)="deleteTenant(tenant)"
+          >
+            Supprimer
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <div class="empty-state">
+        Aucun locataire enregistré.
+        <button class="secondary-button" type="button" (click)="openCreateTenant()">
+          Créer le premier locataire
+        </button>
+      </div>
+    }
+  </div>
+</section>
+
+@if (isTenantModalOpen()) {
+  <div class="modal-backdrop" role="presentation" (click)="closeTenantModal()">
+    <section
+      class="modal-card tenant-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tenant-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Fiche locataire</p>
+          <h2 id="tenant-modal-title">
+            {{ selectedTenantId() ? 'Modifier le locataire' : 'Ajouter un locataire' }}
+          </h2>
+          <p>Identité, contact, date d’entrée et caution.</p>
+        </div>
+        <button class="ghost-button" type="button" aria-label="Fermer" (click)="closeTenantModal()">
+          Fermer
+        </button>
+      </header>
+
+      <form class="form-grid modal-form" [formGroup]="tenantForm" (ngSubmit)="saveTenant()">
+        <label>
+          Nom complet
+          <input formControlName="fullName" placeholder="Nom du locataire" />
+        </label>
+        <label>
+          Téléphone
+          <input formControlName="phone" placeholder="+225 ..." />
+        </label>
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="email@example.com" />
+        </label>
+        <label>
+          Profession
+          <input formControlName="profession" placeholder="Profession" />
+        </label>
+        <label>
+          Pièce d’identité
+          <input formControlName="idDocument" placeholder="CNI, passeport..." />
+        </label>
+        <label>
+          Contact urgence
+          <input formControlName="emergencyContact" placeholder="+225 ..." />
+        </label>
+        <label>
+          Date d’entrée
+          <input type="date" formControlName="startDate" />
+        </label>
+        <label>
+          Caution prévue
+          <input type="number" min="0" formControlName="depositExpected" />
+        </label>
+        <label>
+          Caution reçue
+          <input type="number" min="0" formControlName="depositPaidAmount" />
+        </label>
+        <label>
+          Date réception caution
+          <input type="date" formControlName="depositPaidAt" />
+        </label>
+
+        <div class="form-actions full-span">
+          <button class="secondary-button" type="button" (click)="closeTenantModal()">
+            Annuler
+          </button>
+          <button class="primary-button" type="submit">
+            {{ selectedTenantId() ? 'Enregistrer les modifications' : 'Créer le locataire' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
