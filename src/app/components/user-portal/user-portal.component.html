@@ -1,0 +1,870 @@
+<div class="app-shell marketplace-shell" [class.menu-open]="isMenuOpen()">
+  <header class="app-navbar">
+    <div class="brand-mark">
+      <span>IP</span>
+      <div>
+        <strong>Immo Parc</strong>
+        <small>Annonces immobilières</small>
+      </div>
+    </div>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-label="Ouvrir ou fermer le menu"
+      [attr.aria-expanded]="isMenuOpen()"
+      [class.open]="isMenuOpen()"
+      (click)="toggleMenu()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="navbar-actions">
+      <nav class="navbar-menu-nav" aria-label="Navigation annonces mobile">
+        @for (item of navItems(); track item.id) {
+          <button
+            type="button"
+            [class.active]="activePage() === item.id"
+            (click)="setPage(item.id)"
+          >
+            <app-lucide-icon [name]="navIcon(item.id)" />
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.helper }}</span>
+            @if (item.badge) {
+              <em class="notification-badge">{{ item.badge }}</em>
+            }
+          </button>
+        }
+      </nav>
+
+      <div class="navbar-user" aria-label="Utilisateur connecté">
+        <span>Espace utilisateur</span>
+        <strong>{{ currentUserDisplayName() }}</strong>
+        <em>Profil standard</em>
+      </div>
+
+      <button
+        class="icon-action publish-action"
+        type="button"
+        aria-label="Publier une annonce"
+        title="Publier une annonce"
+        (click)="openCreateListing()"
+      >
+        <app-lucide-icon name="plus-circle" />
+        <span>Publier une annonce</span>
+      </button>
+
+      <button
+        class="icon-action danger logout-action"
+        type="button"
+        aria-label="Déconnexion"
+        title="Déconnexion"
+        (click)="logout()"
+      >
+        <app-lucide-icon name="log-out" />
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar marketplace-sidebar">
+    <nav class="sidebar-nav" aria-label="Navigation annonces">
+      @for (item of navItems(); track item.id) {
+        <button
+          type="button"
+          [class.active]="activePage() === item.id"
+          (click)="setPage(item.id)"
+        >
+          <strong>{{ item.label }}</strong>
+          <span class="nav-helper">{{ item.helper }}</span>
+          @if (item.badge) {
+            <em class="notification-badge">{{ item.badge }}</em>
+          }
+        </button>
+      }
+    </nav>
+  </aside>
+
+  <main
+    class="workspace marketplace-workspace"
+    [class.messages-page]="activePage() === 'messages'"
+    [class.chat-active-page]="activePage() === 'messages' && activeConversation() !== null"
+  >
+    <!-- @if (activePage() !== 'messages' && activePage() !== 'home') {
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Mini marketplace</p>
+          <h1>
+            @switch (activePage()) {
+              @case ('home') { Trouver un bien }
+              @case ('my-listings') { Mes annonces }
+              @case ('account') { Mon compte }
+            }
+          </h1>
+        </div>
+
+        @if (notice()) {
+          <p class="notice">{{ notice() }}</p>
+        }
+      </section>
+    } -->
+
+    @switch (activePage()) {
+      @case ('home') {
+        <section
+          class="panel filter-panel"
+          [class.filters-open]="isFilterOpen()"
+        >
+          <div class="filter-mobile-bar">
+            <button class="secondary-button" type="button" (click)="toggleFilters()">
+              <app-lucide-icon name="sliders-horizontal" />
+              Filtres
+              @if (activeFilterCount()) {
+                <span>{{ activeFilterCount() }}</span>
+              }
+            </button>
+            <small>{{ filteredListings().length }} annonce(s)</small>
+          </div>
+
+          <div class="section-heading compact filter-heading">
+            <div class="filter-title">
+              <span class="filter-title-icon" aria-hidden="true">
+                <app-lucide-icon name="sliders-horizontal" />
+              </span>
+              <!-- <div>
+                <span>Recherche</span>
+                <h2>Filtrer les annonces</h2>
+              </div> -->
+            </div>
+            <div class="filter-actions">
+              <!-- <button class="ghost-button" type="button" (click)="clearFilters()">
+                <app-lucide-icon name="rotate-ccw" />
+                Effacer
+              </button> -->
+              <button class="secondary-button filter-close-button" type="button" (click)="closeFilters()">
+                <app-lucide-icon name="check" />
+                Appliquer
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-grid">
+            <label class="filter-field">
+              <span class="filter-label">
+                <app-lucide-icon name="search" />
+                Mot-clé
+              </span>
+              <input
+                [ngModel]="search()"
+                (ngModelChange)="setSearch($event)"
+                placeholder="quartier, maison, terrain..."
+              />
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">
+                <app-lucide-icon name="map-pin" />
+                Ville ou quartier
+              </span>
+              <input
+                [ngModel]="cityFilter()"
+                (ngModelChange)="setCityFilter($event)"
+                placeholder="Lomé, Vogan..."
+              />
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">
+                <app-lucide-icon name="arrow-left-right" />
+                Transaction
+              </span>
+              <select
+                [ngModel]="transactionFilter()"
+                (ngModelChange)="setTransactionFilter($event)"
+              >
+                <option value="ALL">Toutes</option>
+                <option value="RENT">Location</option>
+                <option value="SALE">Vente</option>
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">
+                <app-lucide-icon name="building-2" />
+                Type de bien
+              </span>
+              <select
+                [ngModel]="propertyTypeFilter()"
+                (ngModelChange)="setPropertyTypeFilter($event)"
+              >
+                @for (type of propertyTypes; track type.value) {
+                  <option [value]="type.value">{{ type.label }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">
+                <app-lucide-icon name="circle-dollar-sign" />
+                Prix minimum
+              </span>
+              <input type="number" min="0" [value]="minPrice() ?? ''" (input)="setMinPrice($event)" />
+            </label>
+
+            <label class="filter-field">
+              <span class="filter-label">
+                <app-lucide-icon name="circle-dollar-sign" />
+                Prix maximum
+              </span>
+              <input type="number" min="0" [value]="maxPrice() ?? ''" (input)="setMaxPrice($event)" />
+            </label>
+          </div>
+        </section>
+
+        <section class="listing-grid">
+          @for (listing of paginatedListings(); track listing.id) {
+            <app-listing-card
+              [listing]="listing"
+              [currentUserId]="store.currentUser()?.id ?? null"
+              [ownerVerified]="isOwnerVerified(listing.ownerUserId)"
+              (open)="openListing($event)"
+              (contact)="openContact($event)"
+            />
+          } @empty {
+            <p class="empty-state">
+              Aucune annonce publiée ne correspond à ta recherche pour le moment.
+            </p>
+          }
+        </section>
+
+        @if (filteredListings().length) {
+          <nav class="pagination-bar" aria-label="Pagination des annonces">
+            <span>{{ listingRangeLabel() }}</span>
+
+            @if (totalListingPages() > 1) {
+              <div>
+                <button
+                  class="ghost-button"
+                  type="button"
+                  [disabled]="currentListingPage() === 1"
+                  (click)="previousListingPage()"
+                >
+                  Precedent
+                  <!--
+                  PrÃ©cÃ©dent
+                  -->
+                </button>
+
+                @for (page of visibleListingPages(); track page) {
+                  <button
+                    class="page-button"
+                    type="button"
+                    [class.active]="page === currentListingPage()"
+                    [attr.aria-current]="page === currentListingPage() ? 'page' : null"
+                    (click)="goToListingPage(page)"
+                  >
+                    {{ page }}
+                  </button>
+                }
+
+                <button
+                  class="ghost-button"
+                  type="button"
+                  [disabled]="currentListingPage() === totalListingPages()"
+                  (click)="nextListingPage()"
+                >
+                  Suivant
+                </button>
+              </div>
+            }
+          </nav>
+        }
+      }
+
+      @case ('my-listings') {
+        <section class="panel">
+          <div class="section-heading compact">
+            <div>
+              <span>Mes annonces</span>
+              <h2>Mes annonces</h2>
+              <p>Tu peux modifier, archiver ou désarchiver une annonce selon la disponibilité du bien.</p>
+            </div>
+            <button class="primary-button" type="button" (click)="openCreateListing()">
+              Ajouter une annonce
+            </button>
+          </div>
+
+          <div class="listing-grid compact-grid">
+            @for (listing of store.myListings(); track listing.id) {
+              <app-listing-card
+                mode="mine"
+                [listing]="listing"
+                [currentUserId]="store.currentUser()?.id ?? null"
+                [ownerVerified]="isOwnerVerified(listing.ownerUserId)"
+                [isBusy]="busyListingId() === listing.id"
+                (edit)="openEditListing($event)"
+                (restore)="restoreListing($event)"
+                (archive)="archiveListing($event)"
+              />
+            } @empty {
+              <p class="empty-state">
+                Tu n’as pas encore publié d’annonce. Ajoute un bien avec au moins 3 photos.
+              </p>
+            }
+          </div>
+        </section>
+      }
+
+      @case ('messages') {
+        <section class="messenger-panel" [class.has-active-chat]="activeConversation() !== null">
+          <aside class="conversation-pane">
+            <div class="messenger-heading">
+              <div>
+                <span>Discussions</span>
+                <h2>Messages</h2>
+              </div>
+
+              @if (store.unreadListingMessagesCount()) {
+                <strong>{{ store.unreadListingMessagesCount() }}</strong>
+              }
+            </div>
+
+            <label class="conversation-search">
+              <span>Recherche</span>
+              <input
+                [ngModel]="messageSearch()"
+                (ngModelChange)="messageSearch.set($event)"
+                placeholder="Annonce, contact, quartier..."
+              />
+            </label>
+
+            <div class="conversation-list" aria-label="Conversations par annonce">
+              @for (conversation of messageConversations(); track conversation.key) {
+                <button
+                  type="button"
+                  class="conversation-row"
+                  [class.active]="activeConversation()?.key === conversation.key"
+                  [class.unread]="conversation.unreadCount > 0"
+                  (click)="openConversation(conversation)"
+                >
+                  <span class="conversation-cover">
+                    @if (conversationAvatar(conversation)) {
+                      <img [src]="conversationAvatar(conversation)" [alt]="conversation.listing?.title || 'Annonce'" />
+                    } @else {
+                      <b>{{ userInitials(conversation.listing?.title) }}</b>
+                    }
+
+                    @if (conversation.unreadCount) {
+                      <i>{{ conversation.unreadCount }}</i>
+                    }
+                  </span>
+
+                  <span class="conversation-summary">
+                    <strong>{{ conversation.listing?.title || 'Annonce indisponible' }}</strong>
+                    <small>{{ conversation.counterpartName }}</small>
+                    <em>{{ conversationSnippet(conversation) }}</em>
+                  </span>
+
+                  <time>{{ messageTime(conversation.updatedAt) }}</time>
+                </button>
+              } @empty {
+                <p class="empty-state compact-empty">
+                  Aucun message pour le moment. Les demandes reçues depuis tes annonces apparaîtront ici.
+                </p>
+              }
+            </div>
+          </aside>
+
+          @if (activeConversation(); as conversation) {
+            <section class="chat-pane">
+              <header class="chat-head">
+                <button
+                  class="chat-back-button"
+                  type="button"
+                  aria-label="Revenir à la liste des messages"
+                  (click)="closeConversation()"
+                >
+                  ←
+                </button>
+
+                <div class="chat-contact">
+                  <span class="chat-avatar">{{ userInitials(conversation.counterpartName) }}</span>
+                  <div>
+                    <strong>{{ conversation.counterpartName }}</strong>
+                    <small>{{ conversation.listing?.title || 'Annonce indisponible' }}</small>
+                    @if (conversation.listing; as listing) {
+                      <em>{{ listingPrice(listing) }} · {{ listing.contactPhone }}</em>
+                    }
+                  </div>
+                </div>
+
+                @if (conversation.listing; as listing) {
+                  <button class="ghost-button" type="button" (click)="openListing(listing)">
+                    Voir l’annonce
+                  </button>
+                }
+
+                <button class="ghost-button chat-close-text" type="button" (click)="closeConversation()">
+                  Fermer
+                </button>
+              </header>
+
+              <div class="chat-thread" aria-label="Fil de conversation">
+                @for (message of conversation.messages; track message.id) {
+                  <article
+                    class="chat-message"
+                    [class.incoming]="isIncoming(message)"
+                    [class.outgoing]="!isIncoming(message)"
+                  >
+                    <div class="bubble">
+                      <p>{{ message.body }}</p>
+                      <small>
+                        {{ messageTime(message.createdAt) }}
+                        @if (!isIncoming(message)) {
+                          · {{ message.readAt ? 'Lu' : 'Envoyé' }}
+                        }
+                      </small>
+                    </div>
+                  </article>
+                }
+              </div>
+
+              @if (chatError()) {
+                <p class="form-error chat-error">{{ chatError() }}</p>
+              }
+
+              <footer class="chat-compose">
+                <textarea
+                  rows="1"
+                  [ngModel]="chatBody()"
+                  (ngModelChange)="chatBody.set($event)"
+                  (keydown.enter)="submitChatOnEnter($event)"
+                  placeholder="Écris un message..."
+                ></textarea>
+                <button
+                  class="primary-button"
+                  type="button"
+                  [disabled]="!chatBody().trim() || isSendingChatMessage()"
+                  (click)="sendChatMessage()"
+                >
+                  @if (isSendingChatMessage()) {
+                    <span class="button-loader" aria-hidden="true"></span>
+                  }
+                  {{ isSendingChatMessage() ? 'Envoi' : 'Envoyer' }}
+                </button>
+              </footer>
+            </section>
+          }
+        </section>
+      }
+
+      @case ('account') {
+        @if (store.currentUser(); as user) {
+          <section class="account-grid">
+            <article class="panel account-card">
+              <div class="section-heading compact">
+                <div>
+                  <span>Profil</span>
+                  <h2>Informations du compte</h2>
+                  <p>Ces informations seront utilisées pour tes annonces et les échanges.</p>
+                </div>
+
+                <em class="verification-pill" [class.verified]="user.verificationStatus === 'VERIFIED'">
+                  {{ verificationStatusLabel() }}
+                </em>
+              </div>
+
+              <div class="form-grid compact-form">
+                <label class="full-span">
+                  Nom d’utilisateur public
+                  <input [ngModel]="accountUsername()" (ngModelChange)="accountUsername.set($event)" />
+                </label>
+                <label>
+                  Prénom
+                  <input [ngModel]="accountFirstName()" (ngModelChange)="accountFirstName.set($event)" />
+                </label>
+                <label>
+                  Nom
+                  <input [ngModel]="accountLastName()" (ngModelChange)="accountLastName.set($event)" />
+                </label>
+                <label>
+                  Téléphone
+                  <input [ngModel]="accountPhone()" (ngModelChange)="accountPhone.set($event)" />
+                </label>
+                <label>
+                  Email
+                  <input type="email" [ngModel]="accountEmail()" (ngModelChange)="accountEmail.set($event)" />
+                </label>
+                <label>
+                  Date de naissance
+                  <input type="date" [ngModel]="accountBirthDate()" (ngModelChange)="accountBirthDate.set($event)" />
+                </label>
+              </div>
+
+              @if (accountError()) {
+                <p class="form-error">{{ accountError() }}</p>
+              }
+
+              <div class="form-actions">
+                <button class="primary-button" type="button" [disabled]="isSavingProfile()" (click)="saveAccountProfile()">
+                  @if (isSavingProfile()) {
+                    <span class="button-loader" aria-hidden="true"></span>
+                  }
+                  {{ isSavingProfile() ? 'Enregistrement' : 'Enregistrer' }}
+                </button>
+              </div>
+            </article>
+
+            <article class="panel account-card">
+              <div class="section-heading compact">
+                <div>
+                  <span>Sécurité</span>
+                  <h2>Mot de passe</h2>
+                  <p>Modifie ton mot de passe sans changer tes annonces.</p>
+                </div>
+              </div>
+
+              <div class="form-grid compact-form">
+                <label>
+                  Mot de passe actuel
+                  <input
+                    type="password"
+                    [ngModel]="currentPassword()"
+                    (ngModelChange)="currentPassword.set($event)"
+                  />
+                </label>
+                <label>
+                  Nouveau mot de passe
+                  <input
+                    type="password"
+                    [ngModel]="newPassword()"
+                    (ngModelChange)="newPassword.set($event)"
+                  />
+                </label>
+                <label>
+                  Confirmer
+                  <input
+                    type="password"
+                    [ngModel]="confirmPassword()"
+                    (ngModelChange)="confirmPassword.set($event)"
+                  />
+                </label>
+              </div>
+
+              @if (passwordError()) {
+                <p class="form-error">{{ passwordError() }}</p>
+              }
+
+              <div class="form-actions">
+                <button class="secondary-button" type="button" [disabled]="isSavingPassword()" (click)="savePassword()">
+                  @if (isSavingPassword()) {
+                    <span class="button-loader" aria-hidden="true"></span>
+                  }
+                  {{ isSavingPassword() ? 'Modification' : 'Modifier le mot de passe' }}
+                </button>
+              </div>
+            </article>
+
+            <article class="panel account-card verification-card">
+              @if (user.verificationStatus === 'VERIFIED') {
+                <div class="verification-success">
+                  <strong>Compte vérifié</strong>
+                  <span>Validé le {{ user.verifiedAt || 'date non renseignée' }}</span>
+                </div>
+              } @else {
+                <div class="section-heading compact">
+                  <div>
+                    <span>Vérification</span>
+                    <h2>Vérifier mon compte</h2>
+                    <p>
+                      Ajoute une pièce d’identité en image ou en PDF. Une fois validée par un admin,
+                      tes annonces afficheront le badge “Vérifié”.
+                    </p>
+                  </div>
+                </div>
+
+                <label class="file-drop verification-drop">
+                  Pièce d’identité
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    (change)="handleVerificationFile($event)"
+                  />
+                  <small>
+                    Image jusqu’à 5 Mo, automatiquement compressée. PDF accepté s’il est léger.
+                  </small>
+                </label>
+
+                @if (verificationDocument(); as document) {
+                  <div class="selected-document">
+                    <strong>{{ document.documentName }}</strong>
+                    <span>{{ document.documentType }} · {{ documentSizeLabel(document.documentSize) }}</span>
+                  </div>
+                }
+
+                @if (user.verificationStatus === 'PENDING') {
+                  <p class="notice">Ta demande est en attente de validation administrateur.</p>
+                } @else if (user.verificationStatus === 'REJECTED') {
+                  <p class="form-error">
+                    La dernière demande a été rejetée.
+                    @if (user.verificationRejectionReason) {
+                      Motif : {{ user.verificationRejectionReason }}.
+                    }
+                    Tu peux renvoyer une pièce lisible.
+                  </p>
+                }
+
+                @if (verificationError()) {
+                  <p class="form-error">{{ verificationError() }}</p>
+                }
+
+                <div class="form-actions">
+                  <button
+                    class="primary-button"
+                    type="button"
+                    [disabled]="!verificationDocument() || isSendingVerification()"
+                    (click)="requestAccountVerification()"
+                  >
+                    @if (isSendingVerification()) {
+                      <span class="button-loader" aria-hidden="true"></span>
+                    }
+                    {{ isSendingVerification() ? 'Envoi' : 'Envoyer la vérification' }}
+                  </button>
+                </div>
+              }
+            </article>
+
+            <article class="panel account-card danger-zone">
+              <div class="section-heading compact">
+                <div>
+                  <span>Suppression</span>
+                  <h2>Supprimer mon compte</h2>
+                  <p>
+                    Le compte sera désactivé pendant 60 jours. Une reconnexion avec tes identifiants
+                    avant ce délai annulera automatiquement la suppression.
+                  </p>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button
+                  class="ghost-button danger"
+                  type="button"
+                  [disabled]="isDeletingAccount()"
+                  (click)="deleteAccount()"
+                >
+                  @if (isDeletingAccount()) {
+                    <span class="button-loader" aria-hidden="true"></span>
+                  }
+                  {{ isDeletingAccount() ? 'Désactivation' : 'Supprimer mon compte' }}
+                </button>
+              </div>
+            </article>
+          </section>
+        }
+      }
+    }
+  </main>
+</div>
+
+@if (isListingModalOpen()) {
+  @if (store.currentUser(); as user) {
+    <app-listing-form-modal
+      [currentUser]="user"
+      [listing]="editingListing()"
+      [isSaving]="isSavingListing()"
+      (save)="saveListing($event)"
+      (cancel)="closeListingModal()"
+    />
+  }
+}
+
+@if (listingPendingArchive(); as listing) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card archive-warning-modal" role="dialog" aria-modal="true">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Archivage annonce</p>
+          <h2>Archiver cette annonce ?</h2>
+          <p>
+            Attention, l’annonce « {{ listing.title }} » ne sera plus visible par les utilisateurs du site.
+            Tu pourras la désarchiver plus tard depuis “Mes annonces”.
+          </p>
+        </div>
+        <button
+          class="ghost-button"
+          type="button"
+          [disabled]="busyListingId() === listing.id"
+          (click)="closeArchiveWarning()"
+        >
+          Fermer
+        </button>
+      </header>
+
+      <div class="form-actions">
+        <button
+          class="secondary-button"
+          type="button"
+          [disabled]="busyListingId() === listing.id"
+          (click)="closeArchiveWarning()"
+        >
+          Annuler
+        </button>
+        <button
+          class="ghost-button danger"
+          type="button"
+          [disabled]="busyListingId() === listing.id"
+          (click)="confirmArchiveListing()"
+        >
+          @if (busyListingId() === listing.id) {
+            <span class="button-loader" aria-hidden="true"></span>
+          }
+          {{ busyListingId() === listing.id ? 'Archivage' : 'Archiver l’annonce' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (selectedListing(); as listing) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card listing-detail-modal" role="dialog" aria-modal="true">
+      <div class="detail-carousel">
+        @if (selectedPhoto()) {
+          <img [src]="selectedPhoto()" [alt]="listing.title" />
+        } @else {
+          <div class="detail-carousel-placeholder">IP</div>
+        }
+
+        @if ((listing.photos?.length ?? 0) > 1) {
+          <button
+            class="carousel-button previous"
+            type="button"
+            aria-label="Photo précédente"
+            (click)="previousSelectedPhoto($event)"
+          >
+            ‹
+          </button>
+          <button
+            class="carousel-button next"
+            type="button"
+            aria-label="Photo suivante"
+            (click)="nextSelectedPhoto($event)"
+          >
+            ›
+          </button>
+
+          <div class="carousel-dots" aria-hidden="true">
+            @for (photo of listing.photos; track photo.id; let index = $index) {
+              <i [class.active]="index === selectedPhotoIndex()"></i>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="listing-detail-body">
+        <header class="modal-head">
+          <div>
+            <p class="eyebrow">{{ listing.transactionType === 'SALE' ? 'Vente' : 'Location' }}</p>
+            <h2>{{ listing.title }}</h2>
+            <p>{{ listing.district }} {{ listing.city }} · {{ listing.address }}</p>
+          </div>
+          <button class="ghost-button" type="button" (click)="closeListing()">Fermer</button>
+        </header>
+
+        <div class="detail-price-line">
+          <strong>{{ listingPrice(listing) }}</strong>
+          @if (canSeeListingViews(listing)) {
+            <span>{{ listing.viewCount || 0 }} vue(s)</span>
+          }
+          @if (isListingBoostActive(listing)) {
+            <em>Publication boostée</em>
+          }
+          @if (isOwnerVerified(listing.ownerUserId)) {
+            <em class="verified-detail-pill">Compte vérifié</em>
+          }
+        </div>
+
+        <dl class="detail-facts">
+          <div>
+            <dt>Chambres</dt>
+            <dd>{{ listing.bedroomCount || 0 }}</dd>
+          </div>
+          <div>
+            <dt>WC / eau</dt>
+            <dd>{{ listing.bathroomCount || 0 }}</dd>
+          </div>
+          <div>
+            <dt>Surface</dt>
+            <dd>{{ listing.surfaceArea || 0 }} m²</dd>
+          </div>
+          @if (listing.transactionType === 'SALE') {
+            <div>
+              <dt>Titre foncier</dt>
+              <dd>{{ listing.landTitleAvailable ? 'Disponible' : 'Non indiqué' }}</dd>
+            </div>
+          } @else {
+            <div>
+              <dt>Durée</dt>
+              <dd>{{ listing.rentalDurationValue }} {{ listing.rentalDurationUnit }}</dd>
+            </div>
+          }
+        </dl>
+
+        <p class="detail-description">
+          {{ listing.description || 'Aucune description détaillée pour le moment.' }}
+        </p>
+
+        <footer class="detail-contact-line">
+          <span>Contact direct : {{ listing.contactPhone }}</span>
+          @if (listing.ownerUserId !== store.currentUser()?.id) {
+            <button class="primary-button" type="button" (click)="openContact(listing)">
+              Contacter
+            </button>
+          }
+        </footer>
+      </div>
+    </section>
+  </div>
+}
+
+@if (contactListing(); as listing) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card contact-modal" role="dialog" aria-modal="true">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Contact annonce</p>
+          <h2>{{ listing.title }}</h2>
+          <p>Ton message sera envoyé à {{ listing.ownerName }}.</p>
+        </div>
+        <button class="ghost-button" type="button" (click)="closeContact()">Fermer</button>
+      </header>
+
+      <label>
+        Message
+        <textarea
+          rows="6"
+          [ngModel]="messageBody()"
+          (ngModelChange)="messageBody.set($event)"
+          placeholder="Bonjour, je suis intéressé(e). Le bien est-il toujours disponible ?"
+        ></textarea>
+      </label>
+
+      @if (messageError()) {
+        <p class="form-error">{{ messageError() }}</p>
+      }
+
+      <div class="form-actions">
+        <button class="secondary-button" type="button" (click)="closeContact()">Annuler</button>
+        <button class="primary-button" type="button" [disabled]="isSendingMessage()" (click)="sendMessage()">
+          @if (isSendingMessage()) {
+            <span class="button-loader" aria-hidden="true"></span>
+          }
+          {{ isSendingMessage() ? 'Envoi' : 'Envoyer' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

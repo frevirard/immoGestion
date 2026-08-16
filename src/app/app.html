@@ -1,5 +1,9 @@
-@if (store.currentUser()) {
-  <app-shell />
+@if (store.currentUser(); as user) {
+  @if (user.role === 'USER') {
+    <app-user-portal />
+  } @else {
+    <app-shell />
+  }
 } @else {
   <app-login />
 }

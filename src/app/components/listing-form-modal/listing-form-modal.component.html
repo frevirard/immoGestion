@@ -1,0 +1,153 @@
+<div class="modal-backdrop" role="presentation">
+  <section class="modal-card listing-modal" role="dialog" aria-modal="true">
+    <header class="modal-head">
+      <div>
+        <p class="eyebrow">{{ isEditMode ? 'Modifier annonce' : 'Nouvelle annonce' }}</p>
+        <h2>{{ isEditMode ? 'Mettre à jour le bien' : 'Publier un bien' }}</h2>
+        <p>
+          Les photos sont obligatoires : au moins 3 images, 5 Mo maximum par photo.
+        </p>
+      </div>
+      <button class="ghost-button" type="button" [disabled]="isSaving" (click)="cancel.emit()">Fermer</button>
+    </header>
+
+    <form class="property-form modal-form" [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Titre de l’annonce
+        <input formControlName="title" placeholder="Maison basse à Cocody" />
+      </label>
+
+      <label>
+        Type d’annonce
+        <select formControlName="transactionType">
+          <option value="RENT">Location</option>
+          <option value="SALE">Vente</option>
+        </select>
+      </label>
+
+      <label>
+        Type de bien
+        <select formControlName="propertyType">
+          @for (type of propertyTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Téléphone de contact
+        <input formControlName="contactPhone" placeholder="+225 ..." />
+      </label>
+
+      <label class="full-span">
+        Adresse du bien
+        <input formControlName="address" placeholder="Rue, repère, commune..." />
+      </label>
+
+      <label>
+        Ville
+        <input formControlName="city" placeholder="Abidjan" />
+      </label>
+
+      <label>
+        Quartier
+        <input formControlName="district" placeholder="Cocody, Yopougon..." />
+      </label>
+
+      @if (transactionType === 'SALE') {
+        <label>
+          Prix de vente
+          <input type="number" min="0" formControlName="salePrice" />
+        </label>
+
+        <label class="checkbox-line">
+          <input type="checkbox" formControlName="landTitleAvailable" />
+          Titre foncier disponible
+        </label>
+      } @else {
+        <label>
+          Loyer
+          <input type="number" min="0" formControlName="monthlyRent" />
+        </label>
+
+        <div class="duration-grid">
+          <label>
+            Durée
+            <input type="number" min="1" formControlName="rentalDurationValue" />
+          </label>
+          <label>
+            Unité
+            <select formControlName="rentalDurationUnit">
+              @for (unit of durationUnits; track unit) {
+                <option [value]="unit">{{ unit }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      }
+
+      <label>
+        Chambres
+        <input type="number" min="0" formControlName="bedroomCount" />
+      </label>
+
+      <label>
+        WC / salles d’eau
+        <input type="number" min="0" formControlName="bathroomCount" />
+      </label>
+
+      <label>
+        Surface estimée
+        <input type="number" min="0" formControlName="surfaceArea" />
+      </label>
+
+      <label class="full-span">
+        Description
+        <textarea
+          rows="5"
+          formControlName="description"
+          placeholder="Ajoute les détails utiles : accès, équipements, proximité, conditions..."
+        ></textarea>
+      </label>
+
+      <div class="file-drop full-span">
+        <label>
+          Photos du bien
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            (change)="handlePhotoSelection($event)"
+          />
+        </label>
+        <small>{{ photos().length }} photo(s) sélectionnée(s). Minimum 3, 5 Mo maximum par photo.</small>
+      </div>
+
+      @if (photos().length) {
+        <div class="photo-grid full-span">
+          @for (photo of photos(); track photo.id) {
+            <figure>
+              <img [src]="photo.dataUrl" [alt]="photo.name" />
+              <figcaption>{{ photo.name }}</figcaption>
+              <button type="button" (click)="removePhoto(photo.id)">Retirer</button>
+            </figure>
+          }
+        </div>
+      }
+
+      @if (error()) {
+        <p class="form-error full-span">{{ error() }}</p>
+      }
+
+      <div class="form-actions full-span">
+        <button class="secondary-button" type="button" [disabled]="isSaving" (click)="cancel.emit()">Annuler</button>
+        <button class="primary-button" type="submit" [disabled]="isSaving">
+          @if (isSaving) {
+            <span class="button-loader" aria-hidden="true"></span>
+          }
+          {{ isSaving ? 'Enregistrement' : (isEditMode ? 'Enregistrer' : 'Publier l’annonce') }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

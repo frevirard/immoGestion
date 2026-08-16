@@ -10,6 +10,8 @@
 /node_modules
 npm-debug.log
 yarn-error.log
+frontend-dev*.log
+/logs/
 
 # IDEs and editors
 .idea/

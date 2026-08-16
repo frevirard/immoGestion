@@ -1,0 +1,77 @@
+<section class="panel listings-admin-page">
+  <div class="section-heading compact">
+    <div>
+      <span>Visibilité</span>
+      <h2>Annonces de la plateforme</h2>
+      <p>Les annonces boostées remontent en priorité dans l’accueil utilisateur.</p>
+    </div>
+    <strong>{{ store.adminListings().length }} annonce(s)</strong>
+  </div>
+
+  <div class="admin-listing-list">
+    @for (listing of store.adminListings(); track listing.id) {
+      <article class="admin-listing-row" [class.boosted]="isBoostActive(listing)">
+        <div class="admin-listing-cover">
+          @if (listing.photos?.[0]?.dataUrl) {
+            <img [src]="listing.photos[0].dataUrl" [alt]="listing.title" />
+          } @else {
+            <span>IP</span>
+          }
+        </div>
+
+        <div class="admin-listing-main">
+          <div>
+            <em>{{ listing.transactionType === 'SALE' ? 'Vente' : 'Location' }}</em>
+            @if (isBoostActive(listing)) {
+              <em class="boost-pill">Boostée</em>
+            }
+            @if (listing.status === 'ARCHIVED') {
+              <em class="archived-pill">Archivée</em>
+            }
+          </div>
+
+          <h3>{{ listing.title }}</h3>
+          <p>{{ listing.district }} {{ listing.city }} · {{ listing.ownerName }}</p>
+          <small>{{ listingPrice(listing) }} · propriétaire : {{ listing.ownerName }}</small>
+        </div>
+
+        <div class="admin-listing-actions">
+          @if (isBoostActive(listing)) {
+            <span>Jusqu’au {{ listing.boostedUntil || 'sans limite' }}</span>
+          } @else {
+            <span>Visibilité standard</span>
+          }
+
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="listing.status === 'ARCHIVED' || savingListingId() === listing.id"
+            (click)="boostListing(listing, 7)"
+          >
+            Booster 7 j
+          </button>
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="listing.status === 'ARCHIVED' || savingListingId() === listing.id"
+            (click)="boostListing(listing, 30)"
+          >
+            Booster 30 j
+          </button>
+          <button
+            class="ghost-button danger"
+            type="button"
+            [disabled]="!listing.boosted || savingListingId() === listing.id"
+            (click)="removeBoost(listing)"
+          >
+            Retirer
+          </button>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-state">
+        Aucune annonce pour le moment. Les publications des utilisateurs apparaîtront ici.
+      </p>
+    }
+  </div>
+</section>

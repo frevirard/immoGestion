@@ -1,13 +1,53 @@
-export type UserRole = 'ADMIN' | 'MANAGER';
+export type UserRole = 'USER' | 'MANAGER' | 'ADMIN';
+export type AccountStatus = 'PENDING' | 'ACTIVE' | 'DISABLED';
+export type AccountVerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 export type RentPaymentStatus = 'PENDING' | 'PAID' | 'DEDUCTED_FROM_DEPOSIT';
+export type ExpenseCategory =
+  | 'RENOVATION'
+  | 'MAINTENANCE'
+  | 'REPAIR'
+  | 'UTILITIES'
+  | 'TAX'
+  | 'INSURANCE'
+  | 'CLEANING'
+  | 'SECURITY'
+  | 'EQUIPMENT'
+  | 'OTHER';
+export type ListingTransactionType = 'RENT' | 'SALE';
+export type ListingPropertyType =
+  | 'LAND'
+  | 'BUILDING'
+  | 'HOUSE'
+  | 'APARTMENT'
+  | 'ROOM'
+  | 'STUDIO'
+  | 'OFFICE'
+  | 'OTHER';
+export type ListingStatus = 'PUBLISHED' | 'INACTIVE' | 'ARCHIVED';
 
 export interface User {
   id: string;
   name: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
-  password: string;
+  password?: string;
   role: UserRole;
+  status?: AccountStatus;
   phone?: string;
+  birthDate?: string;
+  createdAt?: string;
+  deletionRequestedAt?: string;
+  deletionScheduledAt?: string;
+  verificationStatus?: AccountVerificationStatus;
+  verificationRequestedAt?: string;
+  verifiedAt?: string;
+  verificationRejectedAt?: string;
+  verificationRejectionReason?: string;
+  verificationDocumentName?: string;
+  verificationDocumentType?: string;
+  verificationDocumentSize?: number;
 }
 
 export interface PropertyOwner {
@@ -95,6 +135,7 @@ export interface RentPayment {
 }
 
 export interface RentPaymentSnapshot {
+  paymentId?: string;
   propertyId: string;
   month: string;
   expectedAmount: number;
@@ -104,6 +145,7 @@ export interface RentPaymentSnapshot {
   status: RentPaymentStatus;
   paidAt?: string;
   comment?: string;
+  updatedAt?: string;
 }
 
 export interface RentHistoryPoint extends RentPaymentSnapshot {
@@ -132,6 +174,115 @@ export interface PropertyComment {
   createdAt: string;
 }
 
+export interface PropertyExpense {
+  id: string;
+  propertyId: string;
+  propertyReference: string;
+  managerId?: string;
+  managerName: string;
+  category: ExpenseCategory;
+  amount: number;
+  expenseDate: string;
+  comment?: string;
+  attachmentName?: string;
+  attachmentType?: string;
+  attachmentSize: number;
+  createdByUserId: string;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExpenseAttachment {
+  expenseId: string;
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+}
+
+export interface ExpenseAttachmentInput {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+}
+
+export interface PropertyExpenseInput {
+  propertyId: string;
+  category: ExpenseCategory;
+  amount: number;
+  expenseDate: string;
+  comment?: string;
+  attachment?: ExpenseAttachmentInput;
+  removeAttachment?: boolean;
+}
+
+export interface ListingPhoto {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
+}
+
+export interface VerificationDocument {
+  userId: string;
+  userName: string;
+  documentName: string;
+  documentType: string;
+  documentSize: number;
+  dataUrl: string;
+  requestedAt?: string;
+}
+
+export interface MarketplaceListing {
+  id: string;
+  ownerUserId: string;
+  ownerName: string;
+  title: string;
+  transactionType: ListingTransactionType;
+  propertyType: ListingPropertyType;
+  status: ListingStatus;
+  address: string;
+  city?: string;
+  district?: string;
+  contactPhone: string;
+  landTitleAvailable: boolean;
+  salePrice: number;
+  monthlyRent: number;
+  rentalDurationValue: number;
+  rentalDurationUnit?: string;
+  bedroomCount: number;
+  bathroomCount: number;
+  surfaceArea: number;
+  viewCount: number;
+  boosted: boolean;
+  boostedAt?: string;
+  boostedUntil?: string;
+  description?: string;
+  photos: ListingPhoto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ListingInput = Omit<
+  MarketplaceListing,
+  'id' | 'ownerName' | 'status' | 'viewCount' | 'boosted' | 'boostedAt' | 'boostedUntil' | 'createdAt' | 'updatedAt'
+>;
+
+export interface ListingMessage {
+  id: string;
+  listingId: string;
+  senderId: string;
+  senderName: string;
+  recipientId: string;
+  recipientName: string;
+  body: string;
+  createdAt: string;
+  readAt?: string;
+}
+
 export interface AppState {
   users: User[];
   owners: PropertyOwner[];
@@ -141,6 +292,9 @@ export interface AppState {
   occupancies: OccupancyRecord[];
   payments: RentPayment[];
   comments: PropertyComment[];
+  expenses: PropertyExpense[];
+  listings: MarketplaceListing[];
+  listingMessages: ListingMessage[];
 }
 
 export interface TenantInput {
@@ -154,6 +308,37 @@ export interface TenantInput {
   depositExpected: number;
   depositPaidAmount: number;
   depositPaidAt?: string;
+}
+
+export interface RegisterInput {
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  birthDate: string;
+  password: string;
+}
+
+export interface UserProfileInput {
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  birthDate: string;
+}
+
+export interface PasswordUpdateInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface VerificationRequestInput {
+  documentName: string;
+  documentType: string;
+  documentSize: number;
+  dataUrl: string;
 }
 
 export interface AgentRentSummary {

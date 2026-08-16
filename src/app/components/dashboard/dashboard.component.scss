@@ -1,4 +1,686 @@
 :host {
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
+}
+
+.global-kpis {
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.global-kpis article {
+  position: relative;
+  overflow: hidden;
+  min-height: 88px;
+  padding: 0.9rem 1rem;
+}
+
+.global-kpis article::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--brand-500);
+}
+
+.global-kpis article:nth-child(2)::before { background: var(--emerald-500); }
+.global-kpis article:nth-child(3)::before { background: var(--sky-500); }
+.global-kpis article:nth-child(4)::before { background: var(--brand-500); }
+.global-kpis article:nth-child(5)::before { background: var(--cyan-500); }
+.global-kpis article:nth-child(6)::before { background: var(--rose-500); }
+.global-kpis article:nth-child(7)::before { background: var(--amber-500); }
+.global-kpis article:nth-child(8)::before { background: var(--violet-500, var(--brand-500)); }
+
+.global-kpis span {
+  font-size: 0.76rem;
+}
+
+.global-kpis strong {
+  font-size: clamp(1.02rem, 1.35vw, 1.32rem);
+  white-space: nowrap;
+}
+
+.dashboard-recovery-panel {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.dashboard-recovery-panel .section-heading {
+  margin-bottom: 0;
+}
+
+.dashboard-recovery-panel .section-heading h2 {
+  margin-bottom: 0.2rem;
+}
+
+.dashboard-recovery-panel .section-heading span {
+  color: var(--brand-600);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dashboard-recovery-panel .section-heading p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.period-filter {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(170px, 230px)) auto;
+  align-items: end;
+  gap: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--gray-50);
+  padding: 0.75rem;
+}
+
+.period-filter input,
+.period-filter .ghost-button {
+  min-height: 38px;
+}
+
+.dashboard-tabs {
+  margin-top: 0;
+}
+
+.dashboard-tab-panel {
+  min-width: 0;
+  animation: ui-enter 0.22s var(--ease) both;
+}
+
+.dashboard-tab-panel > .table-wrap {
+  max-height: min(420px, calc(100dvh - 410px));
+}
+
+.dashboard-table {
+  min-width: 900px;
+}
+
+.dashboard-table td:last-child {
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.manager-summary-row {
+  cursor: pointer;
+  outline: none;
+}
+
+.manager-summary-row:hover,
+.manager-summary-row:focus-visible,
+.manager-summary-row.active {
+  background: var(--brand-50);
+}
+
+.manager-summary-row.active td:first-child {
+  box-shadow: inset 4px 0 0 var(--brand-500);
+}
+
+.unpaid-badge {
+  display: inline-grid;
+  min-width: 28px;
+  height: 26px;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.unpaid-badge.clear {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.manager-detail-hint {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--gray-500);
+  background: var(--gray-50);
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.manager-detail-panel {
+  display: grid;
+  gap: 0.8rem;
+  border: 1px solid var(--brand-200);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, var(--brand-25), var(--white) 34%);
+  margin-top: 0.8rem;
+  padding: clamp(0.85rem, 1.6vw, 1.2rem);
+  animation: ui-enter 0.22s var(--ease) both;
+}
+
+.manager-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.manager-detail-head span,
+.detail-card-head span {
+  color: var(--brand-600);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.manager-detail-head h3 {
+  margin: 0.2rem 0;
+  font-size: 1.15rem;
+}
+
+.manager-detail-head p {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.manager-detail-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.manager-detail-kpis div {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.7rem;
+}
+
+.manager-detail-kpis dt {
+  color: var(--gray-500);
+  font-size: 0.68rem;
+}
+
+.manager-detail-kpis dd {
+  color: var(--gray-900);
+  margin: 0.2rem 0 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.manager-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.detail-card {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  padding: 0.8rem;
+}
+
+.detail-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.detail-card-head strong {
+  display: grid;
+  min-width: 27px;
+  height: 27px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  font-size: 0.76rem;
+}
+
+.detail-mini-table {
+  display: grid;
+  gap: 0.4rem;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.detail-rent-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  padding: 0.62rem;
+}
+
+.detail-rent-row strong,
+.detail-rent-row small {
+  display: block;
+}
+
+.detail-rent-row strong {
+  color: var(--gray-900);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.detail-rent-row small,
+.detail-rent-row > span {
+  color: var(--gray-500);
+  font-size: 0.7rem;
+}
+
+.detail-rent-row > span,
+.detail-rent-row > em {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.detail-rent-row > em {
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.detail-rent-row.collected-row > em {
+  color: var(--success);
+}
+
+.detail-empty-state {
+  color: var(--gray-500);
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.manager-full-detail {
+  max-height: 350px;
+}
+
+.manager-full-detail table {
+  min-width: 900px;
+}
+
+.manager-full-detail td strong,
+.manager-full-detail td small {
+  display: block;
+}
+
+.manager-full-detail td strong {
+  font-weight: 600;
+}
+
+.manager-full-detail td small {
+  color: var(--gray-500);
+  font-size: 0.7rem;
+}
+
+.rent-state {
+  display: inline-flex;
+  border-radius: var(--radius-pill);
+  color: var(--danger);
+  background: var(--danger-soft);
+  padding: 0.28rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rent-state.clear {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(300px, 1fr);
+  gap: 0.75rem;
+}
+
+.chart-card {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.trend-card {
+  grid-column: 1 / -1;
+}
+
+.chart-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.chart-head span {
+  color: var(--brand-600);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.chart-head h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+}
+
+.chart-head strong,
+.chart-head small {
+  white-space: nowrap;
+}
+
+.stacked-meter,
+.bar-track {
+  display: flex;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+}
+
+.stacked-meter {
+  height: 12px;
+}
+
+.stacked-meter i,
+.bar-track i {
+  min-width: 0;
+  transition: width 0.4s var(--ease);
+}
+
+.collected { background: var(--emerald-500); }
+.deducted { background: var(--amber-500); }
+.remaining { background: var(--rose-500); }
+
+.breakdown-list,
+.agent-bars {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.breakdown-list div {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breakdown-list span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.breakdown-list p {
+  margin: 0;
+}
+
+.breakdown-list strong,
+.breakdown-list em {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.breakdown-list em {
+  color: var(--brand-600);
+  font-style: normal;
+}
+
+.agent-bar-row {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.agent-bar-row > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.agent-bar-row span,
+.agent-bar-row strong {
+  font-size: 0.8rem;
+}
+
+.bar-track {
+  height: 7px;
+}
+
+.bar-track i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-500), var(--cyan-500));
+}
+
+.trend-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+  align-items: end;
+  gap: 0.45rem;
+  min-height: 180px;
+  border-top: 1px solid var(--gray-100);
+  padding-top: 0.75rem;
+}
+
+.trend-column {
+  display: grid;
+  align-items: end;
+  gap: 0.35rem;
+  min-height: 150px;
+}
+
+.trend-bars {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 3px;
+  height: 118px;
+}
+
+.trend-bars span {
+  width: 9px;
+  min-height: 2px;
+  border-radius: 999px 999px 2px 2px;
+}
+
+.trend-column small {
+  color: var(--gray-500);
+  font-size: 0.66rem;
+  text-align: center;
+}
+
+.empty-chart {
+  color: var(--gray-500);
+  margin: 0;
+}
+
+.expense-dashboard {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.expense-dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.expense-dashboard-kpis div {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--rose-50), var(--white));
+  padding: 0.7rem;
+}
+
+.expense-dashboard-kpis dt {
+  color: var(--gray-500);
+  font-size: 0.68rem;
+}
+
+.expense-dashboard-kpis dd {
+  color: var(--gray-900);
+  margin: 0.18rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.expense-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.expense-agent-card {
+  grid-column: 1 / -1;
+}
+
+.expense-bars {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.expense-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.7fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.expense-bar-row > div:first-child {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.expense-bar-row span,
+.expense-bar-row strong,
+.expense-bar-row small {
+  font-size: 0.76rem;
+}
+
+.expense-bar-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expense-bar-row strong,
+.expense-bar-row small {
+  white-space: nowrap;
+}
+
+.expense-bar-row small {
+  color: var(--gray-500);
+}
+
+.expense-bar-row .bar-track i {
+  background: linear-gradient(90deg, var(--rose-500), var(--amber-500));
+}
+
+.expense-bar-row .property-expense i {
+  background: linear-gradient(90deg, var(--brand-500), var(--cyan-500));
+}
+
+.expense-bar-row .manager-expense i {
+  background: linear-gradient(90deg, var(--emerald-500), var(--cyan-500));
+}
+
+@media (max-width: 1320px) {
+  .global-kpis {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .period-filter,
+  .chart-grid,
+  .manager-detail-grid,
+  .manager-detail-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .expense-chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-agent-card {
+    grid-column: auto;
+  }
+
+  .period-filter .ghost-button,
+  .trend-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .global-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .global-kpis article {
+    min-height: 78px;
+    padding: 0.75rem;
+  }
+
+  .period-filter,
+  .chart-grid,
+  .manager-detail-grid,
+  .manager-detail-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .expense-bar-row {
+    grid-template-columns: 1fr;
+  }
+
+  .period-filter .ghost-button,
+  .trend-card {
+    grid-column: auto;
+  }
+
+  .dashboard-tabs {
+    width: 100%;
+  }
+
+  .dashboard-tabs button {
+    flex: 1;
+  }
+
+  .dashboard-tab-panel > .table-wrap {
+    max-height: none;
+  }
+
+  .manager-detail-head,
+  .detail-rent-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .detail-rent-row > span,
+  .detail-rent-row > em {
+    text-align: left;
+  }
 }

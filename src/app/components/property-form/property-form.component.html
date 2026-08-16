@@ -7,8 +7,15 @@
     </div>
     <div class="section-actions">
       <span>{{ store.properties().length }} bien(s)</span>
-      <button class="primary-button" type="button" (click)="openCreateProperty()">
-        Ajouter un bien
+      <button
+        class="icon-action add"
+        type="button"
+        aria-label="Ajouter un bien"
+        title="Ajouter un bien"
+        (click)="openCreateProperty()"
+      >
+        <app-lucide-icon name="plus-circle" />
+        <span>Ajouter un bien</span>
       </button>
     </div>
   </div>
@@ -33,24 +40,41 @@
           <em [class.locked]="!canDeleteProperty(property)">
             {{ deleteStatusLabel(property) }}
           </em>
-          <button class="secondary-button" type="button" (click)="openEditProperty(property)">
-            Modifier
+          <button
+            class="icon-action edit"
+            type="button"
+            aria-label="Modifier le bien"
+            title="Modifier"
+            (click)="openEditProperty(property)"
+          >
+            <app-lucide-icon name="pencil" />
+            <span>Modifier</span>
           </button>
           <button
-            class="danger-link"
+            class="icon-action delete"
             type="button"
+            aria-label="Supprimer le bien"
+            title="Supprimer"
             [disabled]="!canDeleteProperty(property)"
             (click)="deleteProperty(property)"
           >
-            Supprimer
+            <app-lucide-icon name="trash-2" />
+            <span>Supprimer</span>
           </button>
         </div>
       </article>
     } @empty {
       <div class="empty-state">
         Aucun bien enregistré.
-        <button class="secondary-button" type="button" (click)="openCreateProperty()">
-          Créer le premier bien
+        <button
+          class="icon-action add"
+          type="button"
+          aria-label="Créer le premier bien"
+          title="Créer le premier bien"
+          (click)="openCreateProperty()"
+        >
+          <app-lucide-icon name="plus-circle" />
+          <span>Créer le premier bien</span>
         </button>
       </div>
     }
@@ -72,7 +96,7 @@
           <h2 id="property-modal-title">
             {{ selectedPropertyId() ? 'Modifier le bien' : 'Ajouter un bien' }}
           </h2>
-          <p>Composition, loyer, caution, gérant et locateur.</p>
+          <p>Composition, loyer, caution, gérant et Locataire.</p>
         </div>
         <button class="ghost-button" type="button" aria-label="Fermer" (click)="closePropertyModal()">
           Fermer
@@ -134,6 +158,18 @@
             <option value="">Non renseigné</option>
             @for (owner of store.owners(); track owner.id) {
               <option [value]="owner.id">{{ owner.fullName }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Locataire
+          <select formControlName="tenantId">
+            <option value="">Aucun locataire</option>
+            @for (tenant of store.tenants(); track tenant.id) {
+              <option [value]="tenant.id" [disabled]="!canSelectTenant(tenant.id)">
+                {{ tenant.fullName }} · {{ tenant.phone }}{{ tenantOptionLabel(tenant.id) }}
+              </option>
             }
           </select>
         </label>

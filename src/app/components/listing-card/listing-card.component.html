@@ -1,0 +1,150 @@
+<article class="listing-card" [class.boosted]="isBoostActive" (click)="openListing()">
+  <div class="listing-cover">
+    @if (coverPhoto) {
+      <img [src]="coverPhoto" [alt]="listing.title" />
+    } @else {
+      <span>IP</span>
+    }
+
+    @if (hasSeveralPhotos) {
+      <button
+        class="carousel-button previous"
+        type="button"
+        aria-label="Photo précédente"
+        (click)="previousPhoto($event)"
+      >
+        ‹
+      </button>
+      <button
+        class="carousel-button next"
+        type="button"
+        aria-label="Photo suivante"
+        (click)="nextPhoto($event)"
+      >
+        ›
+      </button>
+
+      <div class="carousel-dots" aria-hidden="true">
+        @for (photo of listing.photos; track photo.id; let index = $index) {
+          <i [class.active]="index === safePhotoIndex"></i>
+        }
+      </div>
+    }
+
+    <div class="listing-badges">
+      @if (mode === 'mine') {
+        <span class="status-badge" [class.inactive]="listing.status === 'INACTIVE'" [class.archived]="listing.status === 'ARCHIVED'">
+          {{ statusLabel() }}
+        </span>
+      }
+      @if (isBoostActive) {
+        <span class="boost-badge">Boosté</span>
+      }
+      @if (ownerVerified) {
+        <span class="verified-badge">Vérifié</span>
+      }
+      <span>{{ transactionLabel() }}</span>
+      <span>{{ propertyTypeLabel() }}</span>
+    </div>
+  </div>
+
+  <div class="listing-body">
+    <div>
+      <p class="micro-copy">{{ locationLabel || 'Adresse à préciser' }}</p>
+      <h3>{{ listing.title }}</h3>
+      <strong class="listing-price">{{ priceLabel() }}</strong>
+    </div>
+
+    <p class="listing-description">{{ listing.description || 'Aucune description détaillée pour le moment.' }}</p>
+
+    <dl class="listing-facts">
+      <div>
+        <dt>Chambres</dt>
+        <dd>{{ listing.bedroomCount || 0 }}</dd>
+      </div>
+      <div>
+        <dt>WC / bain</dt>
+        <dd>{{ listing.bathroomCount || 0 }}</dd>
+      </div>
+      <div>
+        <dt>Surface</dt>
+        <dd>{{ listing.surfaceArea || 0 }} m²</dd>
+      </div>
+      @if (listing.transactionType === 'SALE') {
+        <div>
+          <dt>Titre foncier</dt>
+          <dd>{{ listing.landTitleAvailable ? 'Disponible' : 'Non indiqué' }}</dd>
+        </div>
+      }
+    </dl>
+
+    <footer class="listing-footer">
+      @if (canSeeViews) {
+        <span>{{ listing.viewCount || 0 }} vue(s)</span>
+      } @else {
+        <span>{{ listing.ownerName }}</span>
+      }
+
+      @if (mode === 'mine') {
+        <div class="listing-actions">
+          <button
+            class="icon-action edit"
+            type="button"
+            aria-label="Modifier l’annonce"
+            title="Modifier"
+            [disabled]="isBusy"
+            (click)="$event.stopPropagation(); edit.emit(listing)"
+          >
+            <app-lucide-icon name="pencil" />
+            <span>Modifier</span>
+          </button>
+          @if (listing.status !== 'PUBLISHED') {
+            <button
+              class="icon-action restore"
+              type="button"
+              [attr.aria-label]="restoreActionLabel()"
+              [title]="restoreActionLabel()"
+              [disabled]="isBusy"
+              (click)="$event.stopPropagation(); restore.emit(listing)"
+            >
+              @if (isBusy) {
+                <span class="button-loader" aria-hidden="true"></span>
+              } @else {
+                <app-lucide-icon name="archive-restore" />
+              }
+              <span>{{ restoreActionLabel() }}</span>
+            </button>
+          }
+          @if (listing.status === 'PUBLISHED') {
+            <button
+              class="icon-action archive"
+              type="button"
+              aria-label="Archiver l’annonce"
+              title="Archiver"
+              [disabled]="isBusy"
+              (click)="$event.stopPropagation(); archive.emit(listing)"
+            >
+              @if (isBusy) {
+                <span class="button-loader" aria-hidden="true"></span>
+              } @else {
+                <app-lucide-icon name="archive" />
+              }
+              <span>Archiver</span>
+            </button>
+          }
+        </div>
+      } @else if (canContact) {
+        <button
+          class="icon-action publish-action"
+          type="button"
+          aria-label="Contacter"
+          title="Contacter"
+          (click)="$event.stopPropagation(); contact.emit(listing)"
+        >
+          <app-lucide-icon name="send" />
+          <span>Contacter</span>
+        </button>
+      }
+    </footer>
+  </div>
+</article>

@@ -11,41 +11,115 @@
     <p class="eyebrow">Du spécifique au standard</p>
     <h1>Un espace clair pour suivre tes biens.</h1>
     <p class="lead">
-      Connexion par rôle, gestion des biens, locataires, cautions et loyers — en cache local
-      pour cette première version.
+      Connexion par rôle, gestion des biens, locataires, cautions et loyers — connectée au
+      backend Spring Boot.
     </p>
 
-    <form class="form-stack" [formGroup]="loginForm" (ngSubmit)="login()">
-      <label>
-        Email
-        <input type="email" formControlName="email" placeholder="admin@immo.local" />
-      </label>
+    @if (store.apiError()) {
+      <p class="form-error">{{ store.apiError() }}</p>
+    }
 
-      <label>
-        Mot de passe
-        <input type="password" formControlName="password" placeholder="admin123" />
-      </label>
-
-      @if (loginError()) {
-        <p class="form-error">{{ loginError() }}</p>
-      }
-
-      <button class="primary-button" type="submit">Se connecter</button>
-    </form>
-
-    <div class="demo-box">
-      <p>Comptes de démonstration</p>
-      <div class="demo-actions">
-        <button type="button" (click)="quickLogin('admin@immo.local', 'admin123')">
-          Admin
-        </button>
-        <button type="button" (click)="quickLogin('awa@immo.local', 'gerant123')">
-          Gérante Awa
-        </button>
-        <button type="button" (click)="quickLogin('jean@immo.local', 'gerant123')">
-          Gérant Jean
-        </button>
-      </div>
+    <div class="segmented-control auth-switch">
+      <button
+        type="button"
+        [class.active]="authMode() === 'login'"
+        (click)="setMode('login')"
+      >
+        Connexion
+      </button>
+      <button
+        type="button"
+        [class.active]="authMode() === 'register'"
+        (click)="setMode('register')"
+      >
+        Créer un compte
+      </button>
     </div>
+
+    @if (authMode() === 'login') {
+      <form class="form-stack auth-form" [formGroup]="loginForm" (ngSubmit)="login()">
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="admin@immo.local" />
+        </label>
+
+        <label>
+          Mot de passe
+          <input type="password" formControlName="password" placeholder="admin123" />
+        </label>
+
+        @if (loginError()) {
+          <p class="form-error">{{ loginError() }}</p>
+        }
+
+        @if (registerMessage()) {
+          <p class="notice">{{ registerMessage() }}</p>
+        }
+
+        <button class="primary-button" type="submit" [disabled]="isLoggingIn()">
+          @if (isLoggingIn()) {
+            <span class="button-loader" aria-hidden="true"></span>
+          }
+          {{ isLoggingIn() ? 'Connexion' : 'Se connecter' }}
+        </button>
+      </form>
+
+      <div class="demo-box">
+        <p>Comptes de démonstration</p>
+        <div class="demo-actions">
+          <button type="button" (click)="quickLogin('admin@immo.local', 'admin123')">
+            Admin
+          </button>
+          <button type="button" (click)="quickLogin('awa@immo.local', 'gerant123')">
+            Gérante Awa
+          </button>
+          <button type="button" (click)="quickLogin('jean@immo.local', 'gerant123')">
+            Gérant Jean
+          </button>
+        </div>
+      </div>
+    } @else {
+      <form class="form-grid register-grid auth-form" [formGroup]="registerForm" (ngSubmit)="register()">
+        <label class="full-span">
+          Nom d’utilisateur
+          <input formControlName="username" placeholder="ex : casa_bella225" />
+        </label>
+        <label>
+          Nom
+          <input formControlName="lastName" placeholder="Nom" />
+        </label>
+        <label>
+          Prénom
+          <input formControlName="firstName" placeholder="Prénom" />
+        </label>
+        <label>
+          Téléphone
+          <input formControlName="phone" placeholder="+225 ..." />
+        </label>
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="email@example.com" />
+        </label>
+        <label>
+          Date de naissance
+          <input type="date" formControlName="birthDate" />
+        </label>
+        <label>
+          Mot de passe
+          <input type="password" formControlName="password" placeholder="6 caractères minimum" />
+        </label>
+
+        @if (registerError()) {
+          <p class="form-error full-span">{{ registerError() }}</p>
+        }
+
+        <button class="primary-button full-span" type="submit" [disabled]="isRegistering()">
+          @if (isRegistering()) {
+            <span class="button-loader" aria-hidden="true"></span>
+          }
+          {{ isRegistering() ? 'Création' : 'Créer le compte' }}
+        </button>
+      </form>
+    }
   </section>
 </main>

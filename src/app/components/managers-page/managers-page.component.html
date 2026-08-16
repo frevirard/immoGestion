@@ -1,49 +1,259 @@
-<div class="two-column-page">
-  <section class="panel">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Agents</p>
-        <h2>Ajouter un gérant</h2>
-      </div>
-    </div>
-
-    <form class="form-stack" [formGroup]="managerForm" (ngSubmit)="createManager()">
-      <label>
-        Nom
-        <input formControlName="name" placeholder="Nom du gérant" />
-      </label>
-      <label>
-        Email
-        <input type="email" formControlName="email" placeholder="gerant@immo.local" />
-      </label>
-      <label>
-        Téléphone
-        <input formControlName="phone" placeholder="+225 ..." />
-      </label>
-      <label>
-        Mot de passe
-        <input type="text" formControlName="password" />
-      </label>
-      <button class="primary-button" type="submit">Créer le gérant</button>
-    </form>
-  </section>
-
-  <section class="panel">
-    <div class="section-heading compact">
-      <h2>Liste des gérants</h2>
-      <span>{{ store.managers().length }} compte(s)</span>
-    </div>
-
-    <div class="list-stack">
-      @for (manager of store.managers(); track manager.id) {
-        <article class="entity-row">
-          <div>
-            <strong>{{ manager.name }}</strong>
-            <span>{{ manager.email }} · {{ manager.phone || 'Téléphone non renseigné' }}</span>
-          </div>
-          <em>{{ assignedCount(manager.id) }} bien(s)</em>
-        </article>
+<div class="manager-page">
+  <div class="segmented-control manager-tabs" role="tablist" aria-label="Gestion des comptes">
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'add'"
+      (click)="setTab('add')"
+    >
+      Ajout
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'users'"
+      (click)="setTab('users')"
+    >
+      Utilisateurs
+      @if (pendingVerificationCount()) {
+        <span>{{ pendingVerificationCount() }}</span>
       }
-    </div>
-  </section>
+    </button>
+  </div>
+
+  @if (activeTab() === 'add') {
+    <section class="panel manager-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Agents</p>
+          <h2>Ajouter un gérant</h2>
+          <p>Crée un compte agent qui pourra gérer les biens qui lui sont attribués.</p>
+        </div>
+      </div>
+
+      <form class="form-stack manager-form" [formGroup]="managerForm" (ngSubmit)="createManager()">
+        <label>
+          Nom
+          <input formControlName="name" placeholder="Nom du gérant" />
+        </label>
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="gerant@immo.local" />
+        </label>
+        <label>
+          Téléphone
+          <input formControlName="phone" placeholder="+225 ..." />
+        </label>
+        <label>
+          Mot de passe
+          <input type="text" formControlName="password" />
+        </label>
+        <button class="primary-button" type="submit">Créer le gérant</button>
+      </form>
+    </section>
+  } @else {
+    <section class="panel manager-panel">
+      <div class="section-heading compact">
+        <div>
+          <p class="eyebrow">Comptes</p>
+          <h2>Utilisateurs et profils</h2>
+          <p>
+            Consulte les comptes, change les profils et vérifie les pièces d’identité directement
+            depuis la table.
+          </p>
+        </div>
+        <div class="manager-stats">
+          <strong>{{ users().length }} compte(s)</strong>
+          <span>{{ verifiedDocumentCount() }} pièce(s) validée(s)</span>
+        </div>
+      </div>
+
+      <div class="table-wrap account-table-wrap">
+        <table class="account-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Compte</th>
+              <th>Vérification</th>
+              <th>Profil</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td>
+                  <strong>{{ user.name }}</strong>
+                  <span>{{ user.email }}</span>
+                  <small>{{ user.phone || 'Téléphone non renseigné' }}</small>
+                  @if (user.birthDate) {
+                    <small>Né(e) le {{ user.birthDate }}</small>
+                  }
+                </td>
+                <td>
+                  <em class="status-pill" [class.locked]="user.status !== 'ACTIVE'">
+                    {{ statusLabel(user) }}
+                  </em>
+                  @if (user.role === 'MANAGER') {
+                    <small>{{ assignedCount(user.id) }} bien(s) attribué(s)</small>
+                  }
+                </td>
+                <td>
+                  <em
+                    class="status-pill"
+                    [class.locked]="user.verificationStatus !== 'VERIFIED'"
+                    [class.pending]="user.verificationStatus === 'PENDING'"
+                    [class.rejected]="user.verificationStatus === 'REJECTED'"
+                  >
+                    {{ verificationLabel(user) }}
+                  </em>
+
+                  <div class="verification-meta">
+                    @if (hasVerificationDocument(user)) {
+                      <small>
+                        {{ user.verificationDocumentName }} ·
+                        {{ documentSizeLabel(user.verificationDocumentSize) }}
+                      </small>
+                    } @else {
+                      <small>Aucune pièce fournie</small>
+                    }
+
+                    @if (user.verificationRejectionReason) {
+                      <small class="rejection-reason">
+                        Motif : {{ user.verificationRejectionReason }}
+                      </small>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <select [value]="user.role" (change)="updateRole(user, $event)">
+                    <option value="USER">Utilisateur</option>
+                    <option value="MANAGER">Gérant</option>
+                    <option value="ADMIN">Administrateur</option>
+                  </select>
+                </td>
+                <td>
+                  <div class="row-actions account-actions">
+                    @if (user.status !== 'ACTIVE') {
+                      <button class="secondary-button" type="button" (click)="validateUser(user)">
+                        Valider
+                      </button>
+                    }
+
+                    @if (hasVerificationDocument(user)) {
+                      <button class="secondary-button" type="button" (click)="openVerificationDocument(user)">
+                        Voir pièce
+                      </button>
+                    }
+
+                    @if (canApproveVerification(user)) {
+                      <button class="secondary-button" type="button" (click)="approveVerification(user)">
+                        Vérifier
+                      </button>
+                    }
+
+                    @if (canRejectVerification(user)) {
+                      <button class="ghost-button danger" type="button" (click)="openRejectVerification(user)">
+                        Rejeter
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
 </div>
+
+@if (selectedDocument(); as document) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card verification-document-modal" role="dialog" aria-modal="true">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Pièce d’identité</p>
+          <h2>{{ document.userName }}</h2>
+          <p>{{ document.documentName }} · {{ documentSizeLabel(document.documentSize) }}</p>
+        </div>
+        <button class="ghost-button" type="button" (click)="closeVerificationDocument()">Fermer</button>
+      </header>
+
+      <div class="document-toolbar">
+        <button class="secondary-button" type="button" (click)="downloadVerificationDocument()">
+          Télécharger la pièce
+        </button>
+
+        @if (selectedDocumentUser(); as user) {
+          @if (canApproveVerification(user)) {
+            <button class="primary-button" type="button" (click)="approveVerification(user)">
+              Vérifier le compte
+            </button>
+          }
+          @if (canRejectVerification(user)) {
+            <button class="ghost-button danger" type="button" (click)="openRejectVerification(user)">
+              Rejeter
+            </button>
+          }
+        }
+      </div>
+
+      @if (selectedDocumentSafeUrl(); as safeUrl) {
+        <iframe class="document-frame" [src]="safeUrl" [title]="'Pièce de ' + document.userName"></iframe>
+      }
+    </section>
+  </div>
+}
+
+@if (isDocumentLoading() || documentError()) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card verification-status-modal" role="dialog" aria-modal="true">
+      @if (isDocumentLoading()) {
+        <p class="notice">Chargement de la pièce...</p>
+      }
+      @if (documentError()) {
+        <p class="form-error">{{ documentError() }}</p>
+        <div class="form-actions">
+          <button class="ghost-button" type="button" (click)="closeVerificationDocument()">Fermer</button>
+        </div>
+      }
+    </section>
+  </div>
+}
+
+@if (rejectionUser(); as user) {
+  <div class="modal-backdrop" role="presentation">
+    <section class="modal-card rejection-modal" role="dialog" aria-modal="true">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Rejet vérification</p>
+          <h2>{{ user.name }}</h2>
+          <p>Ce motif remplacera le motif précédent et sera visible dans son espace compte.</p>
+        </div>
+        <button class="ghost-button" type="button" (click)="closeRejectVerification()">Fermer</button>
+      </header>
+
+      <label>
+        Motif du rejet
+        <textarea
+          rows="5"
+          [value]="rejectionReason()"
+          (input)="rejectionReason.set($any($event.target).value)"
+          placeholder="Exemple : pièce illisible, nom différent du compte, document expiré..."
+        ></textarea>
+      </label>
+
+      @if (rejectionError()) {
+        <p class="form-error">{{ rejectionError() }}</p>
+      }
+
+      <div class="form-actions">
+        <button class="secondary-button" type="button" (click)="closeRejectVerification()">Annuler</button>
+        <button class="ghost-button danger" type="button" (click)="submitRejectVerification()">
+          Confirmer le rejet
+        </button>
+      </div>
+    </section>
+  </div>
+}

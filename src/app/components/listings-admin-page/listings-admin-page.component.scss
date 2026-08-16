@@ -1,0 +1,193 @@
+:host {
+  display: block;
+}
+
+.listings-admin-page {
+  padding: clamp(20px, 3vw, 34px);
+}
+
+.section-heading > strong {
+  color: var(--gold);
+  font-family: var(--font-title);
+  font-size: 1.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.admin-listing-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.admin-listing-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) minmax(240px, auto);
+  gap: 18px;
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 16px 0;
+}
+
+.admin-listing-cover {
+  display: grid;
+  width: 110px;
+  aspect-ratio: 1 / 0.82;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--blue);
+}
+
+.admin-listing-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-listing-cover span {
+  color: var(--gold-pale);
+  font-family: var(--font-title);
+  font-size: 1.5rem;
+}
+
+.admin-listing-main {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-listing-main > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-listing-main h3 {
+  margin: 0;
+  color: var(--blue);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.admin-listing-main p,
+.admin-listing-main small,
+.admin-listing-actions span {
+  color: var(--text);
+  margin: 0;
+}
+
+.admin-listing-main em {
+  border-radius: 999px;
+  color: var(--blue);
+  background: var(--cream);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+.admin-listing-main .boost-pill {
+  background: var(--gold-pale);
+}
+
+.admin-listing-main .archived-pill {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.admin-listing-actions {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 8px;
+  justify-content: end;
+}
+
+.admin-listing-actions span {
+  grid-column: 1 / -1;
+  justify-self: end;
+  font-size: 0.84rem;
+}
+
+.admin-listing-actions .secondary-button,
+.admin-listing-actions .ghost-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 900px) {
+  .admin-listing-row {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+
+  .admin-listing-cover {
+    width: 88px;
+  }
+
+  .admin-listing-actions {
+    grid-column: 1 / -1;
+    justify-content: start;
+  }
+
+  .admin-listing-actions span {
+    justify-self: start;
+  }
+}
+
+/* TailAdmin admin listings refresh */
+
+.listings-admin-page {
+  padding: clamp(16px, 2vw, 28px);
+}
+
+.section-heading > strong {
+  color: var(--brand-600);
+  font-weight: 700;
+}
+
+.admin-listing-list {
+  border-top-color: var(--gray-200);
+}
+
+.admin-listing-row {
+  border-bottom-color: var(--gray-200);
+}
+
+.admin-listing-cover {
+  border-radius: 14px;
+  background: var(--brand-500);
+}
+
+.admin-listing-cover span {
+  color: var(--white);
+}
+
+.admin-listing-main h3 {
+  color: var(--gray-900);
+  font-weight: 650;
+}
+
+.admin-listing-main p,
+.admin-listing-main small,
+.admin-listing-actions span {
+  color: var(--gray-500);
+}
+
+.admin-listing-main em {
+  color: var(--gray-700);
+  background: var(--gray-100);
+  font-weight: 650;
+}
+
+.admin-listing-main .boost-pill {
+  color: #b54708;
+  background: var(--warning-soft);
+}
+
+.admin-listing-main .archived-pill {
+  color: var(--danger);
+  background: var(--danger-soft);
+}

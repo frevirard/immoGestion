@@ -1,0 +1,307 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  grid-template-rows: var(--header-height) minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--gray-50);
+}
+
+.app-navbar {
+  position: relative;
+  z-index: 50;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.65rem clamp(1rem, 2.2vw, 2rem);
+  backdrop-filter: blur(14px);
+}
+
+.brand-mark {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-mark > span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--brand-500), var(--cyan-500));
+  box-shadow: 0 10px 20px -12px rgba(79, 70, 229, 0.7);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.brand-mark div {
+  display: grid;
+  min-width: 0;
+}
+
+.brand-mark strong {
+  overflow: hidden;
+  color: var(--gray-900);
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.brand-mark small {
+  color: var(--gray-500);
+  font-size: 0.76rem;
+}
+
+.menu-toggle {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-content: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--gray-700);
+  background: var(--white);
+  box-shadow: var(--shadow-xs);
+}
+
+.menu-toggle span {
+  width: 19px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+}
+
+.menu-toggle.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.navbar-actions {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: clamp(1rem, 2.2vw, 2rem);
+  z-index: 60;
+  display: none;
+  width: min(420px, calc(100vw - 2rem));
+  max-height: calc(100dvh - var(--header-height) - 1.5rem);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  box-shadow: var(--shadow-pop);
+  padding: 0.75rem;
+  animation: ui-enter 0.2s var(--ease) both;
+}
+
+.app-shell.menu-open .navbar-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.navbar-menu-nav {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.navbar-menu-nav button {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0 0.65rem;
+  align-items: center;
+  border-radius: var(--radius-md);
+  color: var(--gray-700);
+  background: transparent;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+}
+
+.navbar-menu-nav button:hover,
+.navbar-menu-nav button.active {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+
+.navbar-menu-nav app-lucide-icon {
+  grid-row: 1 / 3;
+  width: 18px;
+  color: var(--brand-500);
+}
+
+.navbar-menu-nav strong {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.navbar-menu-nav span {
+  color: var(--gray-500);
+  font-size: 0.72rem;
+}
+
+.navbar-user {
+  display: grid;
+  border-top: 1px solid var(--gray-100);
+  padding: 0.75rem 0.75rem 0;
+}
+
+.navbar-user span {
+  color: var(--gray-500);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.navbar-user strong {
+  color: var(--gray-900);
+  font-size: 0.9rem;
+}
+
+.navbar-user em {
+  color: var(--brand-600);
+  font-size: 0.76rem;
+  font-style: normal;
+}
+
+.logout-action {
+  width: 100%;
+  justify-content: flex-start;
+  border-color: #fecdd3;
+  color: var(--danger);
+  background: var(--danger-soft);
+  padding-inline: 0.75rem;
+}
+
+.logout-action > span:not(.button-loader) {
+  max-width: 190px;
+  margin-left: 0.45rem;
+  opacity: 1;
+}
+
+.sidebar {
+  grid-column: 1;
+  grid-row: 2;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-right: 1px solid var(--border);
+  background: var(--white);
+  padding: 1rem 0.75rem;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.sidebar-nav button {
+  position: relative;
+  display: grid;
+  gap: 0.1rem;
+  border-radius: var(--radius-md);
+  color: var(--gray-600);
+  background: transparent;
+  padding: 0.68rem 0.8rem 0.68rem 2.65rem;
+  text-align: left;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.sidebar-nav button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--gray-300);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.sidebar-nav button:hover,
+.sidebar-nav button.active {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+
+.sidebar-nav button.active::before {
+  border-color: var(--brand-600);
+  background: var(--brand-600);
+  box-shadow: 0 0 0 4px var(--brand-100);
+}
+
+.sidebar-nav strong {
+  color: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.sidebar-nav span {
+  color: var(--gray-500);
+  font-size: 0.72rem;
+}
+
+.workspace {
+  --workspace-gutter: clamp(1rem, 2vw, 1.75rem);
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--workspace-gutter) var(--workspace-gutter);
+}
+
+.workspace > * {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
+}
+
+.workspace > .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  align-items: center;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.86);
+  background: var(--gray-50);
+  padding: var(--workspace-gutter) 0 0.65rem;
+  backdrop-filter: blur(12px);
+}
+
+.workspace > .topbar .eyebrow {
+  margin-bottom: 0.2rem;
+}
+
+.workspace > .topbar h1 {
+  margin-bottom: 0;
+  font-size: clamp(1.45rem, 2.5vw, 2.1rem);
+}
+
+.marketplace-workspace {
+  min-width: 0;
+}

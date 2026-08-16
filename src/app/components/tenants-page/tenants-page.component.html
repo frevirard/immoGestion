@@ -1,54 +1,187 @@
 <section class="panel tenant-crud-page">
   <div class="section-heading compact">
     <div>
-      <p class="eyebrow">CRUD locataires</p>
-      <h2>Liste des locataires</h2>
-      <p>Consulte les fiches et ouvre une modale uniquement pour saisir ou modifier.</p>
+      <p class="eyebrow">Gestion locative</p>
+      <h2>Locataires</h2>
+      <p>Recherche, filtre et garde la liste lisible même avec beaucoup de fiches.</p>
     </div>
     <div class="section-actions">
-      <span>{{ store.tenants().length }} fiche(s)</span>
-      <button class="primary-button" type="button" (click)="openCreateTenant()">
-        Ajouter un locataire
+      <span>{{ filteredTenants().length }} / {{ totalTenantCount() }} fiche(s)</span>
+      <button
+        class="icon-action add"
+        type="button"
+        aria-label="Ajouter un locataire"
+        title="Ajouter un locataire"
+        (click)="openCreateTenant()"
+      >
+        <app-lucide-icon name="user-plus" />
+        <span>Ajouter un locataire</span>
       </button>
     </div>
   </div>
 
-  <div class="list-stack">
-    @for (tenant of store.tenants(); track tenant.id) {
+  <dl class="tenant-kpis" aria-label="Résumé des locataires">
+    <div>
+      <dt>Total</dt>
+      <dd>{{ totalTenantCount() }}</dd>
+    </div>
+    <div>
+      <dt>Rattachés</dt>
+      <dd>{{ attachedTenantCount() }}</dd>
+    </div>
+    <div>
+      <dt>Disponibles</dt>
+      <dd>{{ freeTenantCount() }}</dd>
+    </div>
+  </dl>
+
+  <div class="tenant-toolbar" aria-label="Filtres locataires">
+    <label class="tenant-search">
+      <span>Recherche rapide</span>
+      <input
+        type="search"
+        [value]="tenantSearch()"
+        placeholder="Nom, téléphone, email, profession..."
+        (input)="setTenantSearch($event)"
+      />
+    </label>
+
+    <div class="tenant-filter">
+      <span>Statut</span>
+      <div class="chip-row">
+        <button type="button" [class.active]="tenantFilter() === 'ALL'" (click)="setTenantFilter('ALL')">
+          Tous
+        </button>
+        <button
+          type="button"
+          [class.active]="tenantFilter() === 'ATTACHED'"
+          (click)="setTenantFilter('ATTACHED')"
+        >
+          Rattachés
+        </button>
+        <button type="button" [class.active]="tenantFilter() === 'FREE'" (click)="setTenantFilter('FREE')">
+          Disponibles
+        </button>
+      </div>
+    </div>
+
+    <button class="ghost-button" type="button" (click)="resetTenantFilters()">
+      Effacer
+    </button>
+  </div>
+
+  <div class="tenant-list-shell">
+    <div class="tenant-list-head" aria-hidden="true">
+      <span>Locataire</span>
+      <span>Caution</span>
+      <span>Entrée</span>
+      <span>Statut</span>
+      <span>Actions</span>
+    </div>
+
+    <div class="list-stack tenant-list">
+    @for (tenant of paginatedTenants(); track tenant.id) {
       <article class="entity-row tenant-management-row" [class.selected]="selectedTenantId() === tenant.id">
         <div class="entity-main">
           <strong>{{ tenant.fullName }}</strong>
-          <span>{{ tenant.phone }} · Solde caution {{ formatMoney(tenant.depositBalance) }}</span>
-          <span>
-            Entrée le {{ tenant.startDate }} ·
-            Caution reçue {{ formatMoney(tenant.depositPaidAmount) }}
-          </span>
+          <span>{{ tenant.phone }}{{ tenant.email ? ' · ' + tenant.email : '' }}</span>
+          <span>{{ tenant.profession || 'Profession non renseignée' }}</span>
+        </div>
+
+        <div class="tenant-money-cell">
+          <strong>{{ formatMoney(tenant.depositBalance) }}</strong>
+          <span>Solde caution</span>
+          <small>Reçue {{ formatMoney(tenant.depositPaidAmount) }}</small>
+        </div>
+
+        <div class="tenant-date-cell">
+          <strong>{{ formatDate(tenant.startDate) }}</strong>
+          <span>Entrée</span>
+        </div>
+
+        <div class="tenant-status-cell">
+          <em [class.locked]="!canDeleteTenant(tenant)">{{ attachedLabel(tenant) }}</em>
         </div>
 
         <div class="row-actions">
-          <em [class.locked]="!canDeleteTenant(tenant)">{{ attachedLabel(tenant) }}</em>
-          <button class="secondary-button" type="button" (click)="openEditTenant(tenant)">
-            Modifier
+          <button
+            class="icon-action edit"
+            type="button"
+            aria-label="Modifier le locataire"
+            title="Modifier"
+            (click)="openEditTenant(tenant)"
+          >
+            <app-lucide-icon name="pencil" />
+            <span>Modifier</span>
           </button>
           <button
-            class="danger-link"
+            class="icon-action delete"
             type="button"
+            aria-label="Supprimer le locataire"
+            title="Supprimer"
             [disabled]="!canDeleteTenant(tenant)"
             (click)="deleteTenant(tenant)"
           >
-            Supprimer
+            <app-lucide-icon name="trash-2" />
+            <span>Supprimer</span>
           </button>
         </div>
       </article>
     } @empty {
       <div class="empty-state">
-        Aucun locataire enregistré.
-        <button class="secondary-button" type="button" (click)="openCreateTenant()">
-          Créer le premier locataire
+        Aucun locataire ne correspond à ces critères.
+        <button
+          class="icon-action add"
+          type="button"
+          aria-label="Créer le premier locataire"
+          title="Créer le premier locataire"
+          (click)="openCreateTenant()"
+        >
+          <app-lucide-icon name="user-plus" />
+          <span>Créer le premier locataire</span>
         </button>
       </div>
     }
+    </div>
   </div>
+
+  <footer class="tenant-pagination" aria-label="Pagination des locataires">
+    <span>
+      Page {{ currentTenantPage() }} / {{ totalTenantPages() }} ·
+      {{ filteredTenants().length }} locataire(s)
+    </span>
+
+    @if (totalTenantPages() > 1) {
+      <div>
+        <button
+          class="ghost-button"
+          type="button"
+          [disabled]="currentTenantPage() === 1"
+          (click)="previousTenantPage()"
+        >
+          Précédent
+        </button>
+        @for (page of visibleTenantPages(); track page) {
+          <button
+            class="ghost-button page-button"
+            type="button"
+            [class.active]="currentTenantPage() === page"
+            (click)="goToTenantPage(page)"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          class="ghost-button"
+          type="button"
+          [disabled]="currentTenantPage() === totalTenantPages()"
+          (click)="nextTenantPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  </footer>
 </section>
 
 @if (isTenantModalOpen()) {

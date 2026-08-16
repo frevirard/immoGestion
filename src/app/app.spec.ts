@@ -22,6 +22,8 @@ describe('App', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Gestion de parc immobilier');
+    expect(compiled.textContent).toContain('Un espace clair pour suivre tes biens.');
+    expect(compiled.querySelector('form')).toBeTruthy();
+    expect(compiled.querySelector('button[type="submit"]')?.textContent).toContain('Se connecter');
   });
 });

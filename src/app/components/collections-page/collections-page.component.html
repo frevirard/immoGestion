@@ -1,0 +1,227 @@
+<section class="collections-page">
+  <div class="collection-kpis" aria-label="Résumé des encaissements">
+    <article class="due-card">
+      <span>Mensualités à collecter</span>
+      <strong>{{ totals().dueCount }}</strong>
+    </article>
+    <article class="amount-card">
+      <span>Reste à encaisser</span>
+      <strong>{{ formatMoney(totals().dueAmount) }}</strong>
+    </article>
+    <article class="collected-card">
+      <span>{{ isAdmin() ? 'Encaissements visibles' : 'Encaissé sur les 15 derniers jours' }}</span>
+      <strong>{{ formatMoney(totals().recentCollected) }}</strong>
+    </article>
+  </div>
+
+  <section class="panel collection-register">
+    <header class="collection-toolbar">
+      <div class="collection-intro">
+        <div class="collection-icon" aria-hidden="true">
+          <app-lucide-icon name="hand-coins" />
+        </div>
+        <div>
+          <h2>Collecte des mensualités</h2>
+          <p>
+            @if (isAdmin()) {
+              Vue permanente de tous les encaissements et loyers restant à collecter.
+            } @else {
+              Seuls tes biens sont affichés. Un loyer soldé reste modifiable pendant 15 jours.
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="collection-filters">
+        <label class="collection-search">
+          <span class="sr-only">Rechercher</span>
+          <app-lucide-icon name="search" />
+          <input
+            type="search"
+            placeholder="Bien, locataire, quartier…"
+            [value]="search()"
+            (input)="updateSearch($event)"
+          />
+        </label>
+
+        <div class="chip-row" aria-label="Filtrer les encaissements">
+          <button type="button" [class.active]="filter() === 'due'" (click)="setFilter('due')">
+            À collecter
+          </button>
+          <button type="button" [class.active]="filter() === 'partial'" (click)="setFilter('partial')">
+            Partiels
+          </button>
+          <button type="button" [class.active]="filter() === 'collected'" (click)="setFilter('collected')">
+            Encaissés
+          </button>
+          <button type="button" [class.active]="filter() === 'all'" (click)="setFilter('all')">
+            Tous
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="table-wrap collection-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Échéance</th>
+            <th>Bien</th>
+            <th>Locataire</th>
+            @if (isAdmin()) {
+              <th>Gérant</th>
+            }
+            <th>Recouvrement</th>
+            <th>Statut</th>
+            <th class="action-heading">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of pageRows(); track row.point.occupancyId + '-' + row.point.month) {
+            <tr>
+              <td>
+                <strong>{{ formatMonth(row.point.month) }}</strong>
+                @if (row.point.paidAt) {
+                  <small>Reçu le {{ formatDate(row.point.paidAt) }}</small>
+                }
+              </td>
+              <td>
+                <strong>{{ row.property.reference }}</strong>
+                <small>{{ row.property.district }} · {{ row.property.category }}</small>
+              </td>
+              <td>{{ row.point.tenantName }}</td>
+              @if (isAdmin()) {
+                <td>{{ store.getManagerName(row.property.managerId) }}</td>
+              }
+              <td class="recovery-cell">
+                <strong>{{ formatMoney(row.point.remainingAmount) }} restant</strong>
+                <small>
+                  {{ formatMoney(row.point.paidAmount) }} encaissés sur
+                  {{ formatMoney(row.point.expectedAmount) }}
+                </small>
+              </td>
+              <td>
+                <span
+                  class="collection-status"
+                  [class.due]="statusClass(row.point) === 'due'"
+                  [class.partial]="statusClass(row.point) === 'partial'"
+                  [class.paid]="statusClass(row.point) === 'paid'"
+                >
+                  {{ statusLabel(row.point) }}
+                </span>
+              </td>
+              <td>
+                <div class="row-actions">
+                  @if (canCollect(row)) {
+                    <button
+                      class="icon-action money"
+                      type="button"
+                      aria-label="Encaisser cette mensualité"
+                      title="Encaisser"
+                      (click)="openDialog(row, 'collect')"
+                    >
+                      <app-lucide-icon name="hand-coins" />
+                      <span>Encaisser</span>
+                    </button>
+                  }
+                  @if (canEdit(row)) {
+                    <button
+                      class="icon-action edit"
+                      type="button"
+                      aria-label="Modifier cet encaissement"
+                      title="Modifier"
+                      (click)="openDialog(row, 'edit')"
+                    >
+                      <app-lucide-icon name="pencil" />
+                      <span>Modifier</span>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="isAdmin() ? 7 : 6">
+                <div class="empty-state">Aucune mensualité ne correspond à ces filtres.</div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="collection-cards">
+      @for (row of pageRows(); track row.point.occupancyId + '-' + row.point.month) {
+        <article>
+          <header>
+            <div>
+              <span>{{ formatMonth(row.point.month) }}</span>
+              <strong>{{ row.property.reference }}</strong>
+            </div>
+            <span
+              class="collection-status"
+              [class.due]="statusClass(row.point) === 'due'"
+              [class.partial]="statusClass(row.point) === 'partial'"
+              [class.paid]="statusClass(row.point) === 'paid'"
+            >
+              {{ statusLabel(row.point) }}
+            </span>
+          </header>
+          <p>{{ row.point.tenantName }} · {{ row.property.district }}</p>
+          <dl>
+            <div><dt>Mensualité</dt><dd>{{ formatMoney(row.point.expectedAmount) }}</dd></div>
+            <div><dt>Encaissé</dt><dd>{{ formatMoney(row.point.paidAmount) }}</dd></div>
+            <div><dt>Reste</dt><dd>{{ formatMoney(row.point.remainingAmount) }}</dd></div>
+          </dl>
+          <footer>
+            @if (canCollect(row)) {
+              <button class="primary-button" type="button" (click)="openDialog(row, 'collect')">
+                <app-lucide-icon name="hand-coins" />
+                Encaisser
+              </button>
+            }
+            @if (canEdit(row)) {
+              <button class="secondary-button" type="button" (click)="openDialog(row, 'edit')">
+                <app-lucide-icon name="pencil" />
+                Modifier
+              </button>
+            }
+          </footer>
+        </article>
+      } @empty {
+        <div class="empty-state">Aucune mensualité ne correspond à ces filtres.</div>
+      }
+    </div>
+
+    <footer class="pagination-bar">
+      <span>
+        Page {{ page() > pageCount() ? pageCount() : page() }} / {{ pageCount() }} ·
+        {{ filteredRows().length }} échéance(s)
+      </span>
+      <div>
+        <button class="page-button" type="button" [disabled]="page() <= 1" (click)="setPage(page() - 1)">
+          Précédent
+        </button>
+        <button
+          class="page-button"
+          type="button"
+          [disabled]="page() >= pageCount()"
+          (click)="setPage(page() + 1)"
+        >
+          Suivant
+        </button>
+      </div>
+    </footer>
+  </section>
+
+  @if (dialogRow(); as row) {
+    <app-rent-collection-modal
+      [property]="row.property"
+      [point]="row.point"
+      [mode]="dialogMode()"
+      [submitting]="submitting()"
+      (cancel)="closeDialog()"
+      (confirm)="confirmCollection($event)"
+    />
+  }
+</section>

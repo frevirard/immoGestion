@@ -26,7 +26,7 @@
         </select>
       </label>
       <label>
-        Locateur
+        Locataire
         <select [value]="property.ownerId ?? ''" (change)="assignOwner(property.id, $event)">
           <option value="">Non renseigné</option>
           @for (owner of store.owners(); track owner.id) {
@@ -38,9 +38,6 @@
   }
 
   <nav class="tabs" aria-label="Dossier du bien">
-    <button type="button" [class.active]="activeTab() === 'tenant'" (click)="setTab('tenant')">
-      Occupation
-    </button>
     <button
       type="button"
       [class.active]="activeTab() === 'payments'"
@@ -48,6 +45,9 @@
       [disabled]="!property.tenantId"
     >
       Loyers
+    </button>
+    <button type="button" [class.active]="activeTab() === 'tenant'" (click)="setTab('tenant')">
+      Occupation
     </button>
     <button
       type="button"
@@ -77,7 +77,9 @@
           <div>
             <h3>{{ replacingTenant() ? 'Nouveau locataire' : 'Locataire et caution' }}</h3>
             @if (selectedTenant() && !replacingTenant()) {
-              <p>Occupant actuel : <strong>{{ selectedTenant()?.fullName }}</strong></p>
+              <p>
+                Occupant actuel : <strong>{{ selectedTenant()?.fullName }}</strong>
+              </p>
             }
           </div>
           @if (property.tenantId && !replacingTenant()) {
@@ -91,6 +93,35 @@
             </button>
           }
         </div>
+
+        <label class="tenant-selector full-span">
+          Locataire existant
+          <select
+            [value]="selectedExistingTenantId()"
+            [disabled]="!canChooseExistingTenant(property)"
+            (change)="attachExistingTenant(property.id, $event)"
+          >
+            <option value="">Choisir depuis la base des locataires</option>
+            @for (tenant of store.tenants(); track tenant.id) {
+              <option
+                [value]="tenant.id"
+                [disabled]="isTenantAttachedElsewhere(tenant.id, property.id)"
+              >
+                {{ tenant.fullName }} · {{ tenant.phone }}
+                {{ isTenantAttachedElsewhere(tenant.id, property.id) ? '— déjà rattaché' : '' }}
+              </option>
+            }
+          </select>
+          @if (property.tenantId && !replacingTenant()) {
+            <small
+              >Pour choisir un autre locataire, clique d’abord sur “Changer de locataire”.</small
+            >
+          } @else {
+            <small
+              >Cette liste vient directement des locataires enregistrés en base de données.</small
+            >
+          }
+        </label>
 
         <label>
           Nom complet
@@ -156,105 +187,121 @@
 
   @if (activeTab() === 'payments') {
     <section class="tab-panel">
-      @if (selectedPaymentSnapshot(); as snapshot) {
-        <div class="payment-focus">
-          <div>
-            <span
-              class="payment-pill"
-              [class.paid]="paymentStatusClass(snapshot) === 'PAID'"
-              [class.deducted]="paymentStatusClass(snapshot) === 'DEDUCTED_FROM_DEPOSIT'"
-            >
-              {{ paymentStatusLabel(snapshot) }}
-            </span>
-            <h3>{{ formatMonth(month()) }}</h3>
-          </div>
-          <dl>
+      <div class="rent-ledger-heading">
+        <div>
+          <h3>Échéancier depuis l’entrée</h3>
+          <p>
+            Une ligne est générée pour chaque mois passé depuis l’occupation du logement. Les mois
+            déjà encaissés ou déduits de la caution sont automatiquement pris en compte.
+          </p>
+        </div>
+
+        @if (rentScheduleTotals(); as totals) {
+          <dl class="rent-ledger-totals" aria-label="Totaux de l’échéancier">
             <div>
               <dt>Attendu</dt>
-              <dd>{{ formatMoney(snapshot.expectedAmount) }}</dd>
+              <dd>{{ formatMoney(totals.expectedAmount) }}</dd>
             </div>
             <div>
               <dt>Encaissé</dt>
-              <dd>{{ formatMoney(snapshot.paidAmount) }}</dd>
-            </div>
-            <div>
-              <dt>Déduit caution</dt>
-              <dd>{{ formatMoney(snapshot.deductionAmount) }}</dd>
+              <dd>{{ formatMoney(totals.paidAmount) }}</dd>
             </div>
             <div>
               <dt>Reste</dt>
-              <dd>{{ formatMoney(snapshot.remainingAmount) }}</dd>
+              <dd>{{ formatMoney(totals.remainingAmount) }}</dd>
             </div>
           </dl>
-        </div>
-      }
-
-      <div class="money-actions">
-        <form class="mini-form" [formGroup]="paymentForm" (ngSubmit)="markRentPaid()">
-          <h3>Encaisser le loyer</h3>
-          <label>
-            Mois
-            <input type="month" formControlName="month" />
-          </label>
-          <label>
-            Reçu le
-            <input type="date" formControlName="paidAt" />
-          </label>
-          <label>
-            Commentaire
-            <input formControlName="comment" placeholder="Mode de paiement..." />
-          </label>
-          <button class="primary-button" type="submit" [disabled]="!canManageTenant(property)">
-            Marquer encaissé
-          </button>
-        </form>
-
-        <form class="mini-form warning" [formGroup]="deductionForm" (ngSubmit)="deductRentFromDeposit()">
-          <h3>Déduire de la caution</h3>
-          @if (selectedTenant(); as tenant) {
-            <p>Solde disponible : <strong>{{ formatMoney(tenant.depositBalance) }}</strong></p>
-          }
-          <label>
-            Mois impayé
-            <input type="month" formControlName="month" />
-          </label>
-          <label>
-            Note
-            <input formControlName="comment" />
-          </label>
-          <button
-            class="secondary-button"
-            type="submit"
-            [disabled]="!canManageTenant(property) || !canDeductFromDeposit(property)"
-          >
-            Déduire si caution suffisante
-          </button>
-        </form>
+        }
       </div>
 
-      <div class="table-wrap">
+      <div class="table-wrap rent-ledger-table">
         <table>
           <thead>
             <tr>
               <th>Mois</th>
+              <th>Locataire</th>
+              <th>Attendu</th>
               <th>Statut</th>
               <th>Encaissé</th>
               <th>Déduit</th>
-              <th>Date</th>
+              <th>Reste</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            @for (payment of selectedPaymentHistory(); track payment.id) {
+            @for (
+              payment of selectedRentSchedule();
+              track payment.occupancyId + '-' + payment.month
+            ) {
               <tr>
                 <td>{{ formatMonth(payment.month) }}</td>
+                <td>
+                  <strong>{{ payment.tenantName }}</strong>
+                  <small>
+                    Entrée {{ formatDate(payment.startedAt) }}
+                    @if (payment.endedAt) {
+                      · sortie {{ formatDate(payment.endedAt) }}
+                    }
+                  </small>
+                </td>
+                <td>{{ formatMoney(payment.expectedAmount) }}</td>
                 <td>{{ paymentStatusLabel(payment) }}</td>
                 <td>{{ formatMoney(payment.paidAmount) }}</td>
                 <td>{{ formatMoney(payment.deductionAmount) }}</td>
-                <td>{{ formatDate(payment.paidAt) }}</td>
+                <td>{{ formatMoney(payment.remainingAmount) }}</td>
+                <td>
+                  <div class="ledger-actions">
+                    @if (canCollectSchedulePoint(property, payment)) {
+                      <button
+                        class="icon-action money"
+                        type="button"
+                        aria-label="Encaisser ce loyer"
+                        title="Encaisser"
+                        (click)="openCollectionDialog(payment, 'collect')"
+                      >
+                        <app-lucide-icon name="credit-card" />
+                        <span>Encaisser</span>
+                      </button>
+                    }
+                    @if (canEditScheduleCollection(property, payment)) {
+                      <button
+                        class="icon-action edit"
+                        type="button"
+                        aria-label="Modifier l’encaissement"
+                        title="Modifier l’encaissement"
+                        (click)="openCollectionDialog(payment, 'edit')"
+                      >
+                        <app-lucide-icon name="pencil" />
+                        <span>Modifier</span>
+                      </button>
+                    }
+                    @if (canDeductSchedulePoint(property, payment)) {
+                      <button
+                        class="icon-action deposit"
+                        type="button"
+                        aria-label="Déduire ce loyer de la caution"
+                        title="Déduire de la caution"
+                        (click)="openDeductionDialog(payment)"
+                      >
+                        <app-lucide-icon name="wallet-cards" />
+                        <span>Déduire</span>
+                      </button>
+                    }
+                    @if (
+                      !canCollectSchedulePoint(property, payment) &&
+                      !canEditScheduleCollection(property, payment) &&
+                      !canDeductSchedulePoint(property, payment)
+                    ) {
+                      <span class="ledger-state">{{ paymentStatusLabel(payment) }}</span>
+                    }
+                  </div>
+                </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="5">Aucun encaissement enregistré pour ce bien.</td>
+                <td colspan="8">
+                  Aucun échéancier disponible : rattache d’abord un locataire au bien.
+                </td>
               </tr>
             }
           </tbody>
@@ -297,7 +344,12 @@
       >
         @for (point of selectedRentHistory(); track point.occupancyId + '-' + point.month) {
           <article class="history-column">
-            <div class="bar-frame" [attr.aria-label]="formatMonth(point.month) + ', ' + point.tenantName + ', ' + historyStatusText(point)">
+            <div
+              class="bar-frame"
+              [attr.aria-label]="
+                formatMonth(point.month) + ', ' + point.tenantName + ', ' + historyStatusText(point)
+              "
+            >
               <span
                 class="segment remaining"
                 [style.height.%]="historySegmentPercent(point, 'remainingAmount')"
@@ -327,7 +379,11 @@
       <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="saveComment()">
         <label>
           Commentaire
-          <textarea formControlName="body" rows="3" placeholder="Observation, incident, travaux, état du bien..."></textarea>
+          <textarea
+            formControlName="body"
+            rows="3"
+            placeholder="Observation, incident, travaux, état du bien..."
+          ></textarea>
         </label>
         <label class="file-drop">
           Ajouter des photos
@@ -383,12 +439,8 @@
           <button class="secondary-button" type="button" (click)="regenerateContract()">
             Régénérer
           </button>
-          <button class="secondary-button" type="button" (click)="printContract()">
-            Imprimer
-          </button>
-          <button class="primary-button" type="button" (click)="saveContract()">
-            Enregistrer
-          </button>
+          <button class="secondary-button" type="button" (click)="printContract()">Imprimer</button>
+          <button class="primary-button" type="button" (click)="saveContract()">Enregistrer</button>
         </div>
 
         <textarea
@@ -401,6 +453,114 @@
         <div class="empty-state">Ajoute un locataire pour générer le contrat.</div>
       }
     </section>
+  }
+
+  @if (collectionDialogPoint(); as point) {
+    <app-rent-collection-modal
+      [property]="property"
+      [point]="point"
+      [mode]="collectionDialogMode()"
+      [submitting]="collectionSubmitting()"
+      (cancel)="closeCollectionDialog()"
+      (confirm)="confirmCollection($event)"
+    />
+  }
+
+  @if (deductionDialogPoint(); as point) {
+    <div class="modal-backdrop" (click)="closeDeductionDialog()">
+      <section
+        class="modal-card deduction-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deduction-dialog-title"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="modal-head">
+          <div>
+            <p class="eyebrow">Caution locative</p>
+            <h2 id="deduction-dialog-title">Déduire de la caution</h2>
+            <p>{{ formatMonth(point.month) }} · {{ point.tenantName }}</p>
+          </div>
+          <button
+            class="icon-action"
+            type="button"
+            aria-label="Fermer la boîte de dialogue"
+            title="Fermer"
+            [disabled]="deductionSubmitting()"
+            (click)="closeDeductionDialog()"
+          >
+            <app-lucide-icon name="x" />
+          </button>
+        </header>
+
+        <div class="deduction-summary">
+          <div>
+            <span>Mensualité</span>
+            <strong>{{ formatMoney(property.rent) }}</strong>
+          </div>
+          <div>
+            <span>Reste à encaisser</span>
+            <strong>{{ formatMoney(point.remainingAmount) }}</strong>
+          </div>
+          <div>
+            <span>Caution disponible</span>
+            <strong>{{ formatMoney(selectedTenant()?.depositBalance ?? 0) }}</strong>
+          </div>
+        </div>
+
+        <label>
+          Montant à déduire
+          <div class="amount-field">
+            <input
+              type="number"
+              min="1"
+              step="1"
+              [max]="deductionMaximum()"
+              [value]="deductionAmount()"
+              (input)="updateDeductionAmount($event)"
+            />
+            <span>F CFA</span>
+          </div>
+          <small>Maximum autorisé : {{ formatMoney(deductionMaximum()) }}</small>
+        </label>
+
+        <label>
+          Commentaire
+          <textarea
+            rows="3"
+            [value]="deductionComment()"
+            (input)="updateDeductionComment($event)"
+          ></textarea>
+        </label>
+
+        @if (deductionAmountError()) {
+          <p class="form-error" role="alert">{{ deductionAmountError() }}</p>
+        }
+
+        <footer class="modal-actions">
+          <button
+            class="ghost-button"
+            type="button"
+            [disabled]="deductionSubmitting()"
+            (click)="closeDeductionDialog()"
+          >
+            Annuler
+          </button>
+          <button
+            class="primary-button"
+            type="button"
+            [disabled]="deductionSubmitting() || !!deductionAmountError()"
+            (click)="confirmDepositDeduction()"
+          >
+            @if (deductionSubmitting()) {
+              Validation…
+            } @else {
+              Confirmer la déduction
+            }
+          </button>
+        </footer>
+      </section>
+    </div>
   }
 } @else {
   <div class="empty-state">Sélectionne un bien pour ouvrir son dossier.</div>

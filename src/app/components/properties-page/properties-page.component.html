@@ -1,62 +1,293 @@
-<section class="property-toolbar">
-  <div class="segmented-control" aria-label="Filtres des biens">
-    <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">
-      Tous
-    </button>
-    <button type="button" [class.active]="filter() === 'OCCUPIED'" (click)="setFilter('OCCUPIED')">
-      Loués
-    </button>
-    <button type="button" [class.active]="filter() === 'AVAILABLE'" (click)="setFilter('AVAILABLE')">
-      Libres
-    </button>
-  </div>
-</section>
+<div class="properties-flow">
+  <header class="stage-head">
+    <div class="stage-stepper" aria-label="Parcours de consultation des biens">
+      <button
+        type="button"
+        class="step-node"
+        [class.active]="viewMode() === 'LIST'"
+        [class.done]="viewMode() === 'DETAIL'"
+        (click)="backToList()"
+      >
+        <span>1</span>
+        <strong>Registre</strong>
+        <small>Liste des biens</small>
+      </button>
 
-<div class="content-grid">
-  <section class="panel">
-    <div class="section-heading compact">
-      <h2>Parc</h2>
-      <span>{{ visibleProperties().length }} bien(s)</span>
+      <i aria-hidden="true"></i>
+
+      <button
+        type="button"
+        class="step-node"
+        [class.active]="viewMode() === 'DETAIL'"
+        [disabled]="!selectedProperty()"
+        (click)="openSelectedProperty()"
+      >
+        <span>2</span>
+        <strong>Fiche active</strong>
+        <small>{{ selectedProperty()?.reference || 'Sélectionne un bien' }}</small>
+      </button>
     </div>
 
-    <div class="property-list">
-      @for (property of visibleProperties(); track property.id) {
-        <article class="property-row" [class.selected]="selectedProperty()?.id === property.id">
-          <button type="button" (click)="selectProperty(property.id)">
-            <span>
-              <strong>{{ property.reference }}</strong>
-              <small>{{ property.category }} · {{ property.district }}</small>
-            </span>
+    @if (viewMode() === 'DETAIL') {
+      <button type="button" class="back-button" (click)="backToList()">
+        ← Retour à la liste
+      </button>
+    }
+  </header>
 
-            <span class="row-meta">
-              <strong>{{ formatMoney(property.rent) }}</strong>
-              @if (isOccupied(property)) {
-                @if (store.rentSnapshotForProperty(property, selectedMonth); as snapshot) {
-                  <em
-                    class="payment-pill"
-                    [class.paid]="paymentStatusClass(snapshot) === 'PAID'"
-                    [class.deducted]="paymentStatusClass(snapshot) === 'DEDUCTED_FROM_DEPOSIT'"
-                  >
-                    {{ paymentStatusLabel(snapshot) }}
-                  </em>
-                }
-              } @else {
-                <em class="payment-pill empty">Libre</em>
-              }
-            </span>
+  <section class="panel property-stage" [class.detail-mode]="viewMode() === 'DETAIL'">
+  @if (viewMode() === 'LIST') {
+    <div class="list-step">
+      <div class="register-sticky-head">
+        <div class="list-hero">
+          <div>
+            <p class="eyebrow">Gestion du parc</p>
+            <h1>Biens immobiliers</h1>
+            <p>
+              Cherche, filtre et ouvre uniquement le dossier du bien dont tu as besoin.
+            </p>
+          </div>
+
+          <div class="list-hero-actions">
+            <span class="result-count">{{ propertyCards().length }} résultat(s)</span>
+            <button
+              class="mobile-filter-toggle"
+              type="button"
+              [class.active]="filtersOpen()"
+              [attr.aria-expanded]="filtersOpen()"
+              (click)="toggleFilters()"
+            >
+              <app-lucide-icon name="sliders-horizontal" />
+              {{ filtersOpen() ? 'Masquer' : 'Filtres' }}
+            </button>
+          </div>
+        </div>
+
+        @if (noticeMessage) {
+          <p class="notice property-notice">{{ noticeMessage }}</p>
+        }
+
+        <dl class="portfolio-strip" aria-label="Résumé du parc">
+          <div>
+            <dt>Total</dt>
+            <dd>{{ totalPropertyCount() }}</dd>
+          </div>
+          <div>
+            <dt>Loués</dt>
+            <dd>{{ occupiedPropertyCount() }}</dd>
+          </div>
+          <div>
+            <dt>Libres</dt>
+            <dd>{{ availablePropertyCount() }}</dd>
+          </div>
+          <div>
+            <dt>Reste</dt>
+            <dd>{{ formatMoney(periodTotals().remainingAmount) }}</dd>
+          </div>
+        </dl>
+
+        <div class="toolbar-card" [class.mobile-open]="filtersOpen()" aria-label="Filtres des biens">
+          <label class="stage-search">
+            <span>Recherche rapide</span>
+            <input
+              type="search"
+              [value]="search()"
+              placeholder="Référence, quartier, gérant, propriétaire..."
+              (input)="setSearch($event)"
+            />
+          </label>
+
+          <div class="filter-block">
+            <span>Occupation</span>
+            <div class="chip-row">
+              <button type="button" [class.active]="filter() === 'ALL'" (click)="setFilter('ALL')">
+                Tous
+              </button>
+              <button type="button" [class.active]="filter() === 'OCCUPIED'" (click)="setFilter('OCCUPIED')">
+                Loués
+              </button>
+              <button type="button" [class.active]="filter() === 'AVAILABLE'" (click)="setFilter('AVAILABLE')">
+                Libres
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-block">
+            <span>Recouvrement</span>
+            <div class="chip-row">
+              <button type="button" [class.active]="recoveryFilter() === 'ALL'" (click)="setRecoveryFilter('ALL')">
+                Tous
+              </button>
+              <button
+                type="button"
+                [class.active]="recoveryFilter() === 'COLLECTED'"
+                (click)="setRecoveryFilter('COLLECTED')"
+              >
+                Encaissés
+              </button>
+              <button
+                type="button"
+                [class.active]="recoveryFilter() === 'REMAINING'"
+                (click)="setRecoveryFilter('REMAINING')"
+              >
+                À relancer
+              </button>
+            </div>
+          </div>
+
+          <div class="period-fields">
+            <label>
+              Début
+              <input type="date" [value]="startDate()" (input)="setStartDate($event)" />
+            </label>
+            <label>
+              Fin
+              <input type="date" [value]="endDate()" (input)="setEndDate($event)" />
+            </label>
+          </div>
+
+          <button class="ghost-button reset-button" type="button" [disabled]="!hasActiveFilters()" (click)="resetAllFilters()">
+            Effacer
           </button>
-        </article>
-      } @empty {
-        <div class="empty-state">Aucun bien pour ce filtre.</div>
+        </div>
+
+        <div class="period-summary">
+          <span>{{ periodLabel() }}</span>
+          <strong>{{ formatMoney(periodTotals().expectedAmount) }} attendu</strong>
+        </div>
+
+        <div class="register-header" aria-hidden="true">
+          <span>Bien</span>
+          <span>Gérant</span>
+          <span>Locataire</span>
+          <span>Loyer</span>
+          <span>Recouvrement</span>
+        </div>
+      </div>
+
+      <div class="property-register" aria-label="Liste des biens">
+        @for (card of paginatedPropertyCards(); track card.property.id) {
+          <article
+            class="register-row"
+            [class.selected]="selectedProperty()?.id === card.property.id"
+            [class.available]="!isOccupied(card.property)"
+          >
+            <button type="button" (click)="openProperty(card.property.id)">
+              <span class="cell-main">
+                <em class="status-pill" [class.paid]="recoveryStatusClass(card.property, card.recovery) === 'PAID'">
+                  {{ recoveryStatusLabel(card.property, card.recovery) }}
+                </em>
+                <strong>{{ card.property.reference }}</strong>
+                <small>{{ card.property.category }} · {{ card.property.district || 'Quartier non renseigné' }}</small>
+                <small>{{ store.propertyComposition(card.property) }}</small>
+              </span>
+
+              <span class="cell-simple">
+                <small>Gérant</small>
+                <strong>{{ store.getManagerName(card.property.managerId) }}</strong>
+              </span>
+
+              <span class="cell-simple">
+                <small>Locataire</small>
+                <strong>{{ store.getTenantName(card.property.tenantId) }}</strong>
+              </span>
+
+              <span class="cell-money">
+                <strong>{{ formatMoney(card.property.rent) }}</strong>
+                <small>mensuel</small>
+              </span>
+
+              <span class="cell-recovery">
+                <strong>{{ formatMoney(card.recovery.remainingAmount) }}</strong>
+                <small>reste à encaisser</small>
+                <em class="unpaid-count" [class.clear]="card.recovery.unpaidMonthCount === 0">
+                  {{ unpaidMonthLabel(card.recovery) }}
+                </em>
+                <span class="progress-track" aria-hidden="true">
+                  <i [style.width.%]="collectionRate(card.recovery)"></i>
+                </span>
+              </span>
+
+              <span class="row-arrow" aria-hidden="true">›</span>
+            </button>
+          </article>
+        } @empty {
+          <div class="empty-state">Aucun bien ne correspond à ces critères.</div>
+        }
+      </div>
+
+      <footer class="register-pagination" aria-label="Pagination des biens">
+        <span>
+          Page {{ currentPropertyPage() }} / {{ totalPropertyPages() }} ·
+          {{ propertyCards().length }} bien(s)
+        </span>
+
+        @if (totalPropertyPages() > 1) {
+          <div>
+            <button
+              class="ghost-button"
+              type="button"
+              [disabled]="currentPropertyPage() === 1"
+              (click)="previousPropertyPage()"
+            >
+              Précédent
+            </button>
+            @for (page of visiblePropertyPages(); track page) {
+              <button
+                class="ghost-button page-button"
+                type="button"
+                [class.active]="currentPropertyPage() === page"
+                (click)="goToPropertyPage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+            <button
+              class="ghost-button"
+              type="button"
+              [disabled]="currentPropertyPage() === totalPropertyPages()"
+              (click)="nextPropertyPage()"
+            >
+              Suivant
+            </button>
+          </div>
+        }
+      </footer>
+    </div>
+  } @else {
+    <div class="detail-step">
+      @if (selectedProperty(); as property) {
+        <header class="detail-command">
+          <button type="button" class="back-button mobile-back" (click)="backToList()">
+            ← Retour
+          </button>
+
+          <div>
+            <p class="eyebrow">Fiche active</p>
+            <h1>{{ property.reference }}</h1>
+            <p>
+              {{ property.category }} · {{ property.district || 'Quartier non renseigné' }} ·
+              {{ formatMoney(property.rent) }} / mois
+            </p>
+          </div>
+
+          <span class="detail-status" [class.available]="!isOccupied(property)">
+            {{ isOccupied(property) ? 'Occupé' : 'Libre' }}
+          </span>
+        </header>
+
+        <app-property-detail
+          [property]="property"
+          [selectedMonth]="selectedMonth"
+          (notice)="handleNotice($event)"
+        />
+      } @else {
+        <div class="empty-state detail-empty">
+          Aucun bien sélectionné. Retourne sur le registre pour ouvrir une fiche.
+          <button type="button" class="primary-button" (click)="backToList()">Voir la liste</button>
+        </div>
       }
     </div>
-  </section>
-
-  <section class="panel detail-panel">
-    <app-property-detail
-      [property]="selectedProperty()"
-      [selectedMonth]="selectedMonth"
-      (notice)="handleNotice($event)"
-    />
+  }
   </section>
 </div>

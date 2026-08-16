@@ -5,15 +5,20 @@ import {
   PropertyCommentPhoto,
   PropertyUnit,
   RentHistoryPoint,
-  RentPaymentSnapshot,
   RentPaymentStatus,
 } from '../../models';
+import { LucideIconComponent } from '../lucide-icon.component';
+import {
+  RentCollectionModalComponent,
+  RentCollectionModalResult,
+  RentCollectionMode,
+} from '../rent-collection-modal/rent-collection-modal.component';
 
 type DetailTab = 'tenant' | 'payments' | 'history' | 'comments' | 'contract';
 
 @Component({
   selector: 'app-property-detail',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LucideIconComponent, RentCollectionModalComponent],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.scss',
 })
@@ -28,18 +33,28 @@ export class PropertyDetailComponent {
   readonly contractDraft = signal('');
   readonly pendingCommentPhotos = signal<PropertyCommentPhoto[]>([]);
   readonly replacingTenant = signal(false);
+  readonly selectedExistingTenantId = signal('');
+  readonly collectionDialogPoint = signal<RentHistoryPoint | null>(null);
+  readonly collectionDialogMode = signal<RentCollectionMode>('collect');
+  readonly collectionSubmitting = signal(false);
+  readonly deductionDialogPoint = signal<RentHistoryPoint | null>(null);
+  readonly deductionAmount = signal(0);
+  readonly deductionComment = signal('Loyer impayé déduit de la caution.');
+  readonly deductionSubmitting = signal(false);
 
   @Output() readonly notice = new EventEmitter<string>();
 
   @Input() set property(value: PropertyUnit | null) {
     this.propertySignal.set(value);
     this.syncForms(value);
+
+    if (value) {
+      void this.refreshTenantOptions();
+    }
   }
 
   @Input() set selectedMonth(value: string) {
     this.month.set(value);
-    this.paymentForm.patchValue({ month: value });
-    this.deductionForm.patchValue({ month: value });
   }
 
   readonly tenantForm = this.fb.group({
@@ -55,17 +70,6 @@ export class PropertyDetailComponent {
     depositPaidAt: [this.today],
   });
 
-  readonly paymentForm = this.fb.group({
-    month: [this.month(), Validators.required],
-    paidAt: [this.today, Validators.required],
-    comment: [''],
-  });
-
-  readonly deductionForm = this.fb.group({
-    month: [this.month(), Validators.required],
-    comment: ['Loyer impayé déduit de la caution.'],
-  });
-
   readonly commentForm = this.fb.group({
     body: ['', Validators.required],
   });
@@ -77,19 +81,72 @@ export class PropertyDetailComponent {
     return property ? this.store.getTenantForProperty(property) : undefined;
   });
 
-  readonly selectedPaymentSnapshot = computed(() => {
+  readonly deductionMaximum = computed(() => {
     const property = this.selectedProperty();
-    return property ? this.store.rentSnapshotForProperty(property, this.month()) : undefined;
+    const tenant = this.selectedTenant();
+    const point = this.deductionDialogPoint();
+
+    if (!property || !tenant || !point) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(property.rent, point.remainingAmount, tenant.depositBalance));
   });
 
-  readonly selectedPaymentHistory = computed(() => {
+  readonly deductionAmountError = computed(() => {
     const property = this.selectedProperty();
-    return property ? this.store.paymentHistoryForProperty(property.id) : [];
+    const tenant = this.selectedTenant();
+    const point = this.deductionDialogPoint();
+    const amount = this.deductionAmount();
+
+    if (!property || !tenant || !point) {
+      return '';
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return 'Saisis un montant supérieur à zéro.';
+    }
+
+    if (amount > property.rent) {
+      return 'Le montant ne peut pas dépasser la mensualité.';
+    }
+
+    if (amount > point.remainingAmount) {
+      return 'Le montant ne peut pas dépasser le reste à encaisser.';
+    }
+
+    if (amount > tenant.depositBalance) {
+      return 'La caution disponible est insuffisante.';
+    }
+
+    return '';
   });
 
   readonly selectedRentHistory = computed(() => {
     const property = this.selectedProperty();
     return property ? this.store.rentHistoryForProperty(property.id, this.month()) : [];
+  });
+
+  readonly selectedRentSchedule = computed(() => {
+    const property = this.selectedProperty();
+    return property ? this.store.rentHistoryForProperty(property.id) : [];
+  });
+
+  readonly rentScheduleTotals = computed(() => {
+    return this.selectedRentSchedule().reduce(
+      (totals, point) => ({
+        expectedAmount: totals.expectedAmount + point.expectedAmount,
+        paidAmount: totals.paidAmount + point.paidAmount,
+        deductionAmount: totals.deductionAmount + point.deductionAmount,
+        remainingAmount: totals.remainingAmount + point.remainingAmount,
+      }),
+      {
+        expectedAmount: 0,
+        paidAmount: 0,
+        deductionAmount: 0,
+        remainingAmount: 0,
+      },
+    );
   });
 
   readonly selectedOccupancyHistory = computed(() => {
@@ -111,25 +168,25 @@ export class PropertyDetailComponent {
     this.activeTab.set(tab);
   }
 
-  assignManager(propertyId: string, event: Event): void {
+  async assignManager(propertyId: string, event: Event): Promise<void> {
     if (!this.ensureAdmin()) {
       return;
     }
 
-    this.store.assignManager(propertyId, this.eventValue(event));
+    await this.store.assignManager(propertyId, this.eventValue(event));
     this.notice.emit('Gérant attribué au bien.');
   }
 
-  assignOwner(propertyId: string, event: Event): void {
+  async assignOwner(propertyId: string, event: Event): Promise<void> {
     if (!this.ensureAdmin()) {
       return;
     }
 
-    this.store.assignOwner(propertyId, this.eventValue(event));
-    this.notice.emit('Locateur rattaché au bien.');
+    await this.store.assignOwner(propertyId, this.eventValue(event));
+    this.notice.emit('Locataire rattaché au bien.');
   }
 
-  saveTenant(): void {
+  async saveTenant(): Promise<void> {
     const property = this.selectedProperty();
 
     if (!property || !this.canManageTenant(property)) {
@@ -144,8 +201,15 @@ export class PropertyDetailComponent {
 
     const hadTenant = Boolean(property.tenantId);
     const replacingTenant = this.replacingTenant();
-    this.store.upsertTenantForProperty(property.id, this.tenantForm.getRawValue(), replacingTenant);
-    this.syncForms(this.store.properties().find((candidate) => candidate.id === property.id) ?? property);
+    await this.store.upsertTenantForProperty(
+      property.id,
+      this.tenantForm.getRawValue(),
+      replacingTenant,
+    );
+    const updatedProperty =
+      this.store.properties().find((candidate) => candidate.id === property.id) ?? property;
+    this.propertySignal.set(updatedProperty);
+    this.syncForms(updatedProperty);
     this.notice.emit(
       replacingTenant
         ? 'Nouveau locataire enregistré. L’ancienne occupation reste dans l’historique.'
@@ -155,7 +219,7 @@ export class PropertyDetailComponent {
     );
   }
 
-  startTenantReplacement(): void {
+  async startTenantReplacement(): Promise<void> {
     const property = this.selectedProperty();
 
     if (!property || !this.canManageTenant(property)) {
@@ -163,7 +227,9 @@ export class PropertyDetailComponent {
       return;
     }
 
+    await this.refreshTenantOptions(true);
     this.replacingTenant.set(true);
+    this.selectedExistingTenantId.set('');
     this.activeTab.set('tenant');
     this.tenantForm.reset({
       fullName: '',
@@ -184,54 +250,178 @@ export class PropertyDetailComponent {
     this.syncForms(this.selectedProperty());
   }
 
-  markRentPaid(): void {
+  async attachExistingTenant(propertyId: string, event: Event): Promise<void> {
     const property = this.selectedProperty();
+    const tenantId = this.eventValue(event);
+    this.selectedExistingTenantId.set(tenantId);
 
-    if (!property || !property.tenantId || !this.canManageTenant(property)) {
-      this.notice.emit('Sélectionne un bien occupé que tu peux gérer.');
+    if (!property || !tenantId || !this.canManageTenant(property)) {
       return;
     }
 
-    if (this.paymentForm.invalid) {
-      this.paymentForm.markAllAsTouched();
+    if (this.isTenantAttachedElsewhere(tenantId, property.id)) {
+      this.notice.emit('Ce locataire est déjà rattaché à un autre bien.');
+      this.selectedExistingTenantId.set(property.tenantId ?? '');
       return;
     }
 
-    const input = this.paymentForm.getRawValue();
-    this.store.markRentPaid(property.id, input.month, input.paidAt, input.comment);
-    this.month.set(input.month);
-    this.notice.emit(`Loyer de ${this.formatMonth(input.month)} marqué comme encaissé.`);
-  }
-
-  deductRentFromDeposit(): void {
-    const property = this.selectedProperty();
-
-    if (!property || !property.tenantId || !this.canManageTenant(property)) {
-      this.notice.emit('Sélectionne un bien occupé que tu peux gérer.');
+    if (property.tenantId && !this.replacingTenant() && property.tenantId !== tenantId) {
+      this.notice.emit(
+        'Clique d’abord sur "Changer de locataire" avant de rattacher un autre locataire.',
+      );
+      this.selectedExistingTenantId.set(property.tenantId);
       return;
     }
 
-    if (this.deductionForm.invalid) {
-      this.deductionForm.markAllAsTouched();
-      return;
-    }
-
-    const input = this.deductionForm.getRawValue();
+    const replaceCurrent = Boolean(property.tenantId && property.tenantId !== tenantId);
 
     try {
-      this.store.deductRentFromDeposit(property.id, input.month, input.comment);
-      this.month.set(input.month);
-      this.syncForms(this.store.properties().find((candidate) => candidate.id === property.id) ?? property);
+      const tenant = await this.store.assignTenantToProperty(propertyId, tenantId, replaceCurrent);
+      const updatedProperty =
+        this.store.properties().find((candidate) => candidate.id === property.id) ?? property;
+      this.propertySignal.set(updatedProperty);
+      this.syncForms(updatedProperty);
       this.activeTab.set('payments');
-      this.notice.emit(
-        `Loyer de ${this.formatMonth(input.month)} déduit de la caution. Nouveau solde recalculé.`,
-      );
-    } catch (error) {
-      this.notice.emit(error instanceof Error ? error.message : 'Déduction impossible.');
+      this.notice.emit(`Locataire ${tenant.fullName} rattaché au bien.`);
+    } catch {
+      this.notice.emit('Impossible de rattacher ce locataire au bien.');
+      this.selectedExistingTenantId.set(property.tenantId ?? '');
     }
   }
 
-  saveContract(): void {
+  openCollectionDialog(point: RentHistoryPoint, mode: RentCollectionMode): void {
+    const property = this.selectedProperty();
+
+    if (
+      !property ||
+      (mode === 'collect' && !this.canCollectSchedulePoint(property, point)) ||
+      (mode === 'edit' && !this.canEditScheduleCollection(property, point))
+    ) {
+      this.notice.emit('Cet encaissement ne peut pas être modifié depuis cette ligne.');
+      return;
+    }
+
+    this.month.set(point.month);
+    this.collectionDialogMode.set(mode);
+    this.collectionDialogPoint.set(point);
+  }
+
+  closeCollectionDialog(): void {
+    if (!this.collectionSubmitting()) {
+      this.collectionDialogPoint.set(null);
+    }
+  }
+
+  async confirmCollection(result: RentCollectionModalResult): Promise<void> {
+    const property = this.selectedProperty();
+    const point = this.collectionDialogPoint();
+    const mode = this.collectionDialogMode();
+
+    if (!property || !point) {
+      return;
+    }
+
+    this.collectionSubmitting.set(true);
+    try {
+      if (mode === 'collect') {
+        await this.store.markRentPaid(
+          property.id,
+          point.month,
+          result.amount,
+          result.paidAt,
+          result.comment || 'Encaissement depuis l’échéancier.',
+        );
+      } else {
+        await this.store.updateRentPaid(
+          property.id,
+          point.month,
+          result.amount,
+          result.paidAt,
+          result.comment,
+        );
+      }
+
+      this.month.set(point.month);
+      this.collectionDialogPoint.set(null);
+      this.notice.emit(
+        mode === 'collect'
+          ? `${this.formatMoney(result.amount)} encaissés pour ${this.formatMonth(point.month)}.`
+          : `Encaissement de ${this.formatMonth(point.month)} corrigé.`,
+      );
+    } catch (error) {
+      this.notice.emit(this.apiErrorMessage(error, 'Impossible d’enregistrer cet encaissement.'));
+    } finally {
+      this.collectionSubmitting.set(false);
+    }
+  }
+
+  openDeductionDialog(point: RentHistoryPoint): void {
+    const property = this.selectedProperty();
+    const tenant = this.selectedTenant();
+
+    if (!property || !tenant || !this.canDeductSchedulePoint(property, point)) {
+      this.notice.emit('Aucune déduction de caution n’est possible pour cette échéance.');
+      return;
+    }
+
+    this.month.set(point.month);
+    this.deductionDialogPoint.set(point);
+    this.deductionAmount.set(this.deductionMaximum());
+    this.deductionComment.set('Loyer impayé déduit de la caution.');
+  }
+
+  closeDeductionDialog(): void {
+    if (this.deductionSubmitting()) {
+      return;
+    }
+
+    this.deductionDialogPoint.set(null);
+  }
+
+  updateDeductionAmount(event: Event): void {
+    this.deductionAmount.set(Number((event.target as HTMLInputElement).value));
+  }
+
+  updateDeductionComment(event: Event): void {
+    this.deductionComment.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  async confirmDepositDeduction(): Promise<void> {
+    const property = this.selectedProperty();
+    const point = this.deductionDialogPoint();
+    const amount = this.deductionAmount();
+
+    if (!property || !point || !this.canDeductSchedulePoint(property, point)) {
+      this.notice.emit('Cette échéance ne peut plus être déduite de la caution.');
+      return;
+    }
+
+    if (this.deductionAmountError()) {
+      return;
+    }
+
+    this.deductionSubmitting.set(true);
+    try {
+      await this.store.deductRentFromDeposit(
+        property.id,
+        point.month,
+        amount,
+        this.deductionComment().trim(),
+      );
+      this.month.set(point.month);
+      this.activeTab.set('payments');
+      this.notice.emit(
+        `${this.formatMoney(amount)} déduits de la caution pour ${this.formatMonth(point.month)}.`,
+      );
+      this.deductionDialogPoint.set(null);
+    } catch (error) {
+      this.notice.emit(this.apiErrorMessage(error, 'Déduction impossible.'));
+    } finally {
+      this.deductionSubmitting.set(false);
+    }
+  }
+
+  async saveContract(): Promise<void> {
     const property = this.selectedProperty();
 
     if (!property || !property.tenantId || !this.canManageTenant(property)) {
@@ -244,18 +434,18 @@ export class PropertyDetailComponent {
       return;
     }
 
-    this.store.saveContract(property.id, this.contractDraft());
+    await this.store.saveContract(property.id, this.contractDraft());
     this.notice.emit('Contrat enregistré dans le cache local.');
   }
 
-  regenerateContract(): void {
+  async regenerateContract(): Promise<void> {
     const property = this.selectedProperty();
 
     if (!property || !property.tenantId || !this.canManageTenant(property)) {
       return;
     }
 
-    const contract = this.store.regenerateContract(property.id);
+    const contract = await this.store.regenerateContract(property.id);
 
     if (contract) {
       this.contractDraft.set(contract.content);
@@ -288,7 +478,7 @@ export class PropertyDetailComponent {
     this.pendingCommentPhotos.update((photos) => photos.filter((photo) => photo.id !== photoId));
   }
 
-  saveComment(): void {
+  async saveComment(): Promise<void> {
     const property = this.selectedProperty();
     const user = this.store.currentUser();
 
@@ -303,7 +493,12 @@ export class PropertyDetailComponent {
     }
 
     const body = this.commentForm.getRawValue().body || 'Photo jointe.';
-    const comment = this.store.addComment(property.id, user, body, this.pendingCommentPhotos());
+    const comment = await this.store.addComment(
+      property.id,
+      user,
+      body,
+      this.pendingCommentPhotos(),
+    );
     this.commentForm.reset({ body: '' });
     this.pendingCommentPhotos.set([]);
     this.notice.emit(`Commentaire ajouté par ${comment.authorName}.`);
@@ -359,38 +554,66 @@ export class PropertyDetailComponent {
     return Boolean(user && (user.role === 'ADMIN' || property.managerId === user.id));
   }
 
-  canDeductFromDeposit(property: PropertyUnit): boolean {
+  canChooseExistingTenant(property: PropertyUnit): boolean {
+    return this.canManageTenant(property) && (!property.tenantId || this.replacingTenant());
+  }
+
+  isTenantAttachedElsewhere(tenantId: string, propertyId: string): boolean {
+    return this.store.isTenantAttachedToAnotherProperty(tenantId, propertyId);
+  }
+
+  canDeductSchedulePoint(property: PropertyUnit, point: RentHistoryPoint): boolean {
     const tenant = this.store.getTenantForProperty(property);
-    const snapshot = this.store.rentSnapshotForProperty(
-      property,
-      this.deductionForm.getRawValue().month,
-    );
 
     return Boolean(
+      this.canManageTenant(property) &&
       tenant &&
-        snapshot.status === 'PENDING' &&
-        snapshot.remainingAmount > 0 &&
-        tenant.depositBalance >= snapshot.remainingAmount,
+      property.tenantId === point.tenantId &&
+      point.remainingAmount > 0 &&
+      tenant.depositBalance > 0,
     );
+  }
+
+  canCollectSchedulePoint(property: PropertyUnit, point: RentHistoryPoint): boolean {
+    return Boolean(
+      this.canManageTenant(property) &&
+      property.tenantId === point.tenantId &&
+      point.remainingAmount > 0,
+    );
+  }
+
+  canEditScheduleCollection(property: PropertyUnit, point: RentHistoryPoint): boolean {
+    if (!this.canManageTenant(property) || point.paidAmount <= 0) {
+      return false;
+    }
+
+    return this.isAdmin() || this.isWithinCollectionWindow(point);
   }
 
   statusLabel(property: PropertyUnit): string {
     return this.isOccupied(property) ? 'Loué' : 'Libre';
   }
 
-  paymentStatusLabel(snapshot?: { status?: RentPaymentStatus }): string {
+  paymentStatusLabel(snapshot?: {
+    status?: RentPaymentStatus;
+    remainingAmount?: number;
+    paidAmount?: number;
+    deductionAmount?: number;
+  }): string {
     switch (snapshot?.status) {
       case 'PAID':
-        return 'Encaissé';
+        if (snapshot.remainingAmount && snapshot.remainingAmount > 0) {
+          return 'Encaissement partiel';
+        }
+
+        return snapshot.deductionAmount ? 'Soldé (mixte)' : 'Encaissé';
       case 'DEDUCTED_FROM_DEPOSIT':
-        return 'Déduit caution';
+        return snapshot.remainingAmount && snapshot.remainingAmount > 0
+          ? 'Déduction partielle'
+          : 'Déduit caution';
       default:
         return 'À encaisser';
     }
-  }
-
-  paymentStatusClass(snapshot?: { status?: RentPaymentStatus }): RentPaymentStatus {
-    return snapshot?.status ?? 'PENDING';
   }
 
   historySegmentPercent(
@@ -409,21 +632,24 @@ export class PropertyDetailComponent {
       return 0;
     }
 
-    return Math.min(
-      ((point.paidAmount + point.deductionAmount) / point.expectedAmount) * 100,
-      100,
-    );
+    return Math.min(((point.paidAmount + point.deductionAmount) / point.expectedAmount) * 100, 100);
   }
 
   historyStatusText(point: RentHistoryPoint): string {
     const recovered = this.historyRecoveredPercent(point);
 
     if (point.status === 'PAID') {
-      return 'Loyer payé';
+      if (point.remainingAmount > 0) {
+        return 'Encaissement partiel';
+      }
+
+      return point.deductionAmount > 0 ? 'Loyer soldé (mixte)' : 'Loyer payé';
     }
 
     if (point.status === 'DEDUCTED_FROM_DEPOSIT') {
-      return 'Payé par déduction de caution';
+      return point.remainingAmount > 0
+        ? 'Déduction partielle de caution'
+        : 'Payé par déduction de caution';
     }
 
     return recovered > 0 ? 'Paiement partiel' : 'Loyer non encaissé';
@@ -475,6 +701,7 @@ export class PropertyDetailComponent {
 
     const tenant = this.store.getTenantForProperty(property);
     const contract = this.store.getContractForProperty(property.id);
+    this.selectedExistingTenantId.set(tenant?.id ?? '');
 
     this.tenantForm.reset({
       fullName: tenant?.fullName ?? '',
@@ -488,16 +715,51 @@ export class PropertyDetailComponent {
       depositPaidAmount: tenant?.depositPaidAmount ?? property.deposit,
       depositPaidAt: tenant?.depositPaidAt ?? this.today,
     });
-    this.paymentForm.patchValue({ month: this.month(), paidAt: this.today, comment: '' });
-    this.deductionForm.patchValue({
-      month: this.month(),
-      comment: 'Loyer impayé déduit de la caution.',
-    });
     this.commentForm.reset({ body: '' });
     this.pendingCommentPhotos.set([]);
     this.replacingTenant.set(false);
+    this.collectionDialogPoint.set(null);
+    this.collectionSubmitting.set(false);
+    this.deductionDialogPoint.set(null);
+    this.deductionSubmitting.set(false);
     this.contractDraft.set(contract?.content ?? '');
     this.activeTab.set(property.tenantId ? 'payments' : 'tenant');
+  }
+
+  private apiErrorMessage(error: unknown, fallback: string): string {
+    if (typeof error !== 'object' || error === null || !('error' in error)) {
+      return error instanceof Error ? error.message : fallback;
+    }
+
+    const response = (error as { error?: string | { detail?: string; message?: string } }).error;
+
+    if (typeof response === 'string') {
+      return response.trim() || fallback;
+    }
+
+    return response?.detail || response?.message || fallback;
+  }
+
+  private isWithinCollectionWindow(point: RentHistoryPoint): boolean {
+    const referenceDate = point.paidAt || point.updatedAt;
+
+    if (!referenceDate) {
+      return false;
+    }
+
+    const limit = new Date(`${referenceDate.slice(0, 10)}T23:59:59`);
+    limit.setDate(limit.getDate() + 15);
+    return new Date() <= limit;
+  }
+
+  private async refreshTenantOptions(showError = false): Promise<void> {
+    try {
+      await this.store.refreshTenants();
+    } catch {
+      if (showError) {
+        this.notice.emit('Impossible de charger les locataires depuis la base.');
+      }
+    }
   }
 
   private ensureAdmin(): boolean {

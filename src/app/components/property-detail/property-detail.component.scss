@@ -1,3 +1,224 @@
 :host {
   display: block;
 }
+
+.rent-ledger-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 4px 0 14px;
+}
+
+.rent-ledger-heading h3 {
+  margin: 0 0 6px;
+  color: var(--gray-900);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.rent-ledger-heading p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.rent-ledger-totals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+}
+
+.rent-ledger-totals div {
+  min-width: 112px;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 12px;
+}
+
+.rent-ledger-totals dt {
+  color: var(--gray-500);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.rent-ledger-totals dd {
+  margin: 4px 0 0;
+  color: var(--gray-900);
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rent-ledger-table table {
+  min-width: 920px;
+}
+
+.rent-ledger-table td {
+  vertical-align: middle;
+}
+
+.rent-ledger-table td strong,
+.rent-ledger-table td small {
+  display: block;
+}
+
+.rent-ledger-table td strong {
+  color: var(--gray-900);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.rent-ledger-table td small {
+  color: var(--gray-500);
+  margin-top: 3px;
+  font-size: 0.74rem;
+}
+
+.ledger-state {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  color: var(--gray-600);
+  background: var(--gray-100);
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.ledger-actions {
+  display: flex;
+  min-width: 92px;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.icon-action.deposit {
+  border-color: #fde68a;
+  color: var(--warning);
+  background: var(--amber-50);
+}
+
+.deduction-modal {
+  display: grid;
+  width: min(590px, 100%);
+  gap: 1rem;
+}
+
+.deduction-modal .modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+}
+
+.deduction-modal .modal-head h2 {
+  margin: 0.2rem 0;
+  color: var(--gray-900);
+  font-size: 1.35rem;
+}
+
+.deduction-modal .modal-head p:last-child {
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 0.82rem;
+}
+
+.deduction-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.deduction-summary > div {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  padding: 0.75rem;
+}
+
+.deduction-summary span,
+.deduction-modal label small {
+  color: var(--gray-500);
+  font-size: 0.73rem;
+}
+
+.deduction-summary strong {
+  color: var(--gray-900);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.deduction-modal label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--gray-700);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.amount-field {
+  position: relative;
+}
+
+.amount-field input {
+  width: 100%;
+  padding-right: 5rem;
+}
+
+.amount-field span {
+  position: absolute;
+  top: 50%;
+  right: 0.9rem;
+  color: var(--gray-500);
+  font-size: 0.78rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  border-top: 1px solid var(--gray-100);
+  padding-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .rent-ledger-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rent-ledger-totals {
+    justify-content: stretch;
+  }
+
+  .rent-ledger-totals div {
+    flex: 1 1 130px;
+  }
+
+  .deduction-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}

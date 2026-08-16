@@ -1,0 +1,101 @@
+<div class="modal-backdrop" (click)="cancel.emit()">
+  <section
+    class="modal-card collection-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="collection-dialog-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-head">
+      <div>
+        <p class="eyebrow">{{ mode === 'collect' ? 'Nouvel encaissement' : 'Correction' }}</p>
+        <h2 id="collection-dialog-title">
+          {{ mode === 'collect' ? 'Encaisser un loyer' : 'Modifier l’encaissement' }}
+        </h2>
+        <p>{{ property.reference }} · {{ formatMonth(point.month) }} · {{ point.tenantName }}</p>
+      </div>
+      <button
+        class="icon-action"
+        type="button"
+        aria-label="Fermer la boîte de dialogue"
+        title="Fermer"
+        [disabled]="submitting"
+        (click)="cancel.emit()"
+      >
+        <app-lucide-icon name="x" />
+      </button>
+    </header>
+
+    <div class="collection-summary" aria-label="Résumé de l’échéance">
+      <div>
+        <span>Mensualité</span>
+        <strong>{{ formatMoney(point.expectedAmount) }}</strong>
+      </div>
+      <div>
+        <span>Déjà encaissé</span>
+        <strong>{{ formatMoney(point.paidAmount) }}</strong>
+      </div>
+      <div>
+        <span>Reste dû</span>
+        <strong>{{ formatMoney(point.remainingAmount) }}</strong>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        {{ mode === 'collect' ? 'Montant reçu' : 'Total encaissé corrigé' }}
+        <div class="amount-field">
+          <input
+            type="number"
+            step="1"
+            [min]="mode === 'collect' ? 1 : 0"
+            [max]="maximumAmount"
+            formControlName="amount"
+            inputmode="numeric"
+            autocomplete="off"
+          />
+          <span>F CFA</span>
+        </div>
+        <small>Maximum autorisé : {{ formatMoney(maximumAmount) }}</small>
+      </label>
+
+      <label>
+        Date de réception
+        <input type="date" formControlName="paidAt" />
+      </label>
+
+      <label>
+        Commentaire <small>(facultatif)</small>
+        <textarea
+          rows="3"
+          formControlName="comment"
+          placeholder="Mode de paiement, référence, précision…"
+        ></textarea>
+      </label>
+
+      @if (mode === 'edit') {
+        <p class="edit-hint">
+          Une valeur à zéro annule l’encaissement si aucune déduction de caution n’est enregistrée.
+        </p>
+      }
+
+      @if (amountError) {
+        <p class="form-error" role="alert">{{ amountError }}</p>
+      }
+
+      <footer class="modal-actions">
+        <button class="ghost-button" type="button" [disabled]="submitting" (click)="cancel.emit()">
+          Annuler
+        </button>
+        <button class="primary-button" type="submit" [disabled]="submitting || !!amountError">
+          @if (submitting) {
+            <span class="button-loader" aria-hidden="true"></span>
+            Enregistrement…
+          } @else {
+            {{ mode === 'collect' ? 'Confirmer l’encaissement' : 'Enregistrer la correction' }}
+          }
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>

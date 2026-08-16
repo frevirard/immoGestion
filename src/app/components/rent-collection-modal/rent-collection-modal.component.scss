@@ -1,0 +1,83 @@
+.collection-modal {
+  width: min(640px, 100%);
+}
+
+.collection-modal form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.collection-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.collection-summary div {
+  display: grid;
+  gap: 0.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--gray-50);
+  padding: 0.75rem;
+}
+
+.collection-summary span,
+.collection-modal label small {
+  color: var(--gray-500);
+  font-size: 0.73rem;
+}
+
+.collection-summary strong {
+  color: var(--gray-900);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.amount-field {
+  position: relative;
+}
+
+.amount-field input {
+  padding-right: 5rem;
+}
+
+.amount-field span {
+  position: absolute;
+  top: 50%;
+  right: 0.9rem;
+  color: var(--gray-500);
+  font-size: 0.78rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.edit-hint {
+  border-radius: var(--radius-md);
+  color: var(--gray-600);
+  background: var(--gray-50);
+  margin: 0;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  border-top: 1px solid var(--gray-100);
+  margin-top: 0.2rem;
+  padding-top: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .collection-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,4 +1,4 @@
-<div class="app-shell">
+<div class="app-shell" [class.menu-open]="isMenuOpen()">
   <header class="app-navbar">
     <div class="brand-mark">
       <span>IP</span>
@@ -8,23 +8,50 @@
       </div>
     </div>
 
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-label="Ouvrir ou fermer le menu"
+      [attr.aria-expanded]="isMenuOpen()"
+      [class.open]="isMenuOpen()"
+      (click)="toggleMenu()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <div class="navbar-actions">
+      <nav class="navbar-menu-nav" aria-label="Navigation principale mobile">
+        @for (item of navItems(); track item.id) {
+          <button
+            type="button"
+            [class.active]="activePage() === item.id"
+            (click)="setPage(item.id)"
+          >
+            <app-lucide-icon [name]="navIcon(item.id)" />
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.helper }}</span>
+          </button>
+        }
+      </nav>
+
       <div class="navbar-user" aria-label="Utilisateur connecté">
         <span>Connecté en tant que</span>
         <strong>{{ store.currentUser()?.name }}</strong>
         <em>{{ isAdmin() ? 'Administrateur' : 'Gérant' }}</em>
       </div>
 
-      <label class="month-picker navbar-month">
-        Mois suivi
-        <input type="month" [value]="selectedMonth()" (change)="setSelectedMonth($event)" />
-      </label>
 
-      <button class="ghost-button" type="button" (click)="resetDemoData()">
-        Réinitialiser
-      </button>
-      <button class="ghost-button danger" type="button" (click)="logout()">
-        Déconnexion
+      <button
+        class="icon-action danger logout-action"
+        type="button"
+        aria-label="Déconnexion"
+        title="Déconnexion"
+        (click)="logout()"
+      >
+        <app-lucide-icon name="log-out" />
+        <span>Déconnexion</span>
       </button>
     </div>
   </header>
@@ -45,6 +72,7 @@
   </aside>
 
   <main class="workspace">
+    @if (activePage() !== 'properties') {
     <section class="topbar">
       <div>
         <p class="eyebrow">Du spécifique au standard</p>
@@ -52,9 +80,12 @@
           @switch (activePage()) {
             @case ('dashboard') { Tableau de bord }
             @case ('properties') { Biens immobiliers }
+            @case ('collections') { Encaissements }
+            @case ('expenses') { Dépenses }
             @case ('add-property') { Ajouter un bien }
             @case ('managers') { Gérants }
             @case ('tenants') { Locataires }
+            @case ('listings') { Annonces }
           }
         </h1>
       </div>
@@ -63,16 +94,24 @@
         <p class="notice">{{ notice() }}</p>
       }
     </section>
+    }
 
     @switch (activePage()) {
       @case ('dashboard') {
-        <app-dashboard [selectedMonth]="selectedMonth()" />
+        <app-dashboard />
       }
       @case ('properties') {
         <app-properties-page
           [selectedMonth]="selectedMonth()"
+          [noticeMessage]="notice()"
           (notice)="handleNotice($event)"
         />
+      }
+      @case ('collections') {
+        <app-collections-page (notice)="handleNotice($event)" />
+      }
+      @case ('expenses') {
+        <app-expenses-page (notice)="handleNotice($event)" />
       }
       @case ('add-property') {
         <app-property-form (notice)="handleNotice($event)" />
@@ -82,6 +121,9 @@
       }
       @case ('tenants') {
         <app-tenants-page (notice)="handleNotice($event)" />
+      }
+      @case ('listings') {
+        <app-listings-admin-page (notice)="handleNotice($event)" />
       }
     }
   </main>

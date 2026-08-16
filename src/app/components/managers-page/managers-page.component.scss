@@ -1,3 +1,303 @@
 :host {
   display: block;
 }
+
+.manager-page {
+  display: grid;
+  gap: 18px;
+}
+
+.manager-tabs {
+  width: min(100%, 420px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.manager-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.manager-tabs span {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--blue);
+  background: var(--gold-pale);
+  font-size: 0.72rem;
+}
+
+.manager-tabs button.active span {
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.manager-panel {
+  min-height: 520px;
+}
+
+.manager-form {
+  max-width: 620px;
+}
+
+.manager-stats {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  color: var(--text);
+}
+
+.manager-stats strong {
+  color: var(--blue);
+}
+
+.account-table {
+  min-width: 980px;
+}
+
+.account-table td {
+  vertical-align: top;
+}
+
+.account-table td,
+.account-table th {
+  padding-right: 18px;
+}
+
+.account-table td:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 250px;
+}
+
+.account-table strong {
+  color: var(--blue);
+}
+
+.account-table span,
+.account-table small {
+  color: var(--text);
+}
+
+.account-table select {
+  min-width: 190px;
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 2px;
+  color: var(--success);
+  background: var(--success-soft);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 6px 9px;
+  text-transform: uppercase;
+}
+
+.status-pill.locked {
+  color: var(--blue);
+  background: var(--gold-pale);
+}
+
+.status-pill.pending {
+  color: #9a4b2c;
+  background: #f7e1d3;
+}
+
+.status-pill.rejected {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.verification-meta {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+  max-width: 320px;
+}
+
+.rejection-reason {
+  border-left: 2px solid var(--danger);
+  background: var(--danger-soft);
+  padding: 8px 10px;
+}
+
+.account-actions {
+  justify-content: flex-start;
+}
+
+.account-actions .secondary-button,
+.account-actions .ghost-button {
+  min-height: 36px;
+  padding: 9px 12px;
+}
+
+.verification-document-modal {
+  display: grid;
+  width: min(100%, 1040px);
+  padding: clamp(22px, 4vw, 38px);
+}
+
+.document-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.document-frame {
+  width: 100%;
+  min-height: min(68vh, 720px);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--cream);
+}
+
+.verification-status-modal,
+.rejection-modal {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 620px);
+  padding: clamp(22px, 4vw, 38px);
+}
+
+@media (max-width: 860px) {
+  .manager-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    margin-top: 0;
+    background: var(--white);
+  }
+
+  .manager-panel {
+    min-height: auto;
+  }
+
+  .manager-stats {
+    justify-items: start;
+  }
+
+  .account-table,
+  .account-table thead,
+  .account-table tbody,
+  .account-table tr,
+  .account-table th,
+  .account-table td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .account-table thead {
+    display: none;
+  }
+
+  .account-table tr {
+    border-bottom: 1px solid var(--line-soft);
+    padding: 16px 0;
+  }
+
+  .account-table td {
+    border-bottom: 0;
+    padding: 8px 0;
+  }
+
+  .account-table td:first-child {
+    min-width: 0;
+  }
+
+  .account-table select {
+    min-width: 0;
+  }
+
+  .account-actions {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .document-toolbar {
+    display: grid;
+  }
+
+  .document-frame {
+    min-height: 62vh;
+  }
+}
+
+@media (max-width: 520px) {
+  .manager-tabs {
+    width: 100%;
+  }
+}
+
+/* TailAdmin accounts refresh */
+
+.manager-page {
+  gap: 16px;
+}
+
+.manager-tabs span {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+
+.manager-tabs button.active span {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.manager-stats {
+  color: var(--gray-500);
+}
+
+.manager-stats strong,
+.account-table strong {
+  color: var(--gray-900);
+}
+
+.account-table span,
+.account-table small {
+  color: var(--gray-500);
+}
+
+.status-pill {
+  border-radius: 999px;
+  color: #027a48;
+  background: var(--success-soft);
+  font-weight: 650;
+}
+
+.status-pill.locked {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+
+.status-pill.pending {
+  color: #b54708;
+  background: var(--warning-soft);
+}
+
+.status-pill.rejected {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.rejection-reason {
+  border-left-color: var(--danger);
+  border-radius: 10px;
+  background: var(--danger-soft);
+}
+
+.document-frame {
+  border-color: var(--gray-200);
+  border-radius: 14px;
+  background: var(--gray-50);
+}

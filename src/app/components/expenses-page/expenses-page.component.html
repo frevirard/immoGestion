@@ -1,0 +1,287 @@
+<section class="expenses-page">
+  <div class="expense-kpis" aria-label="Résumé des dépenses filtrées">
+    <article>
+      <span>Dépenses</span>
+      <strong>{{ totals().count }}</strong>
+    </article>
+    <article>
+      <span>Montant total</span>
+      <strong>{{ formatMoney(totals().amount) }}</strong>
+    </article>
+    <article>
+      <span>Mois en cours</span>
+      <strong>{{ formatMoney(totals().currentMonthAmount) }}</strong>
+    </article>
+    <article>
+      <span>Avec justificatif</span>
+      <strong>{{ totals().withAttachment }}</strong>
+    </article>
+  </div>
+
+  <section class="panel expense-register">
+    <header class="expense-toolbar">
+      <div class="expense-intro">
+        <span class="expense-icon" aria-hidden="true">
+          <app-lucide-icon name="receipt-text" />
+        </span>
+        <div>
+          <h2>Suivi des dépenses</h2>
+          <p>Dépenses par bien, gérant, catégorie et période.</p>
+        </div>
+        <button class="primary-button" type="button" [disabled]="!store.visibleProperties().length" (click)="openCreate()">
+          <app-lucide-icon name="plus" />
+          Ajouter une dépense
+        </button>
+      </div>
+
+      <div class="expense-filters" aria-label="Filtres des dépenses">
+        <label class="expense-search">
+          <span>Recherche</span>
+          <div>
+            <app-lucide-icon name="search" />
+            <input
+              type="search"
+              placeholder="Bien, gérant, catégorie…"
+              [value]="search()"
+              (input)="updateSearch($event)"
+            />
+          </div>
+        </label>
+
+        <label>
+          Catégorie
+          <select [value]="categoryFilter()" (change)="updateCategoryFilter($event)">
+            <option value="ALL">Toutes</option>
+            @for (category of categories; track category.value) {
+              <option [value]="category.value">{{ category.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Bien
+          <select [value]="propertyFilter()" (change)="updatePropertyFilter($event)">
+            <option value="ALL">Tous les biens</option>
+            @for (property of store.visibleProperties(); track property.id) {
+              <option [value]="property.id">{{ property.reference }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Début
+          <input type="date" [value]="startDate()" (input)="updateStartDate($event)" />
+        </label>
+
+        <label>
+          Fin
+          <input type="date" [value]="endDate()" (input)="updateEndDate($event)" />
+        </label>
+
+        <button class="ghost-button" type="button" (click)="resetFilters()">Effacer</button>
+      </div>
+    </header>
+
+    <div class="table-wrap expense-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Bien</th>
+            <th>Gérant</th>
+            <th>Catégorie</th>
+            <th>Montant</th>
+            <th>Justificatif</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (expense of pageExpenses(); track expense.id) {
+            <tr>
+              <td>{{ formatDate(expense.expenseDate) }}</td>
+              <td>
+                <strong>{{ expense.propertyReference }}</strong>
+                <small>{{ expense.comment || 'Sans commentaire' }}</small>
+              </td>
+              <td>{{ expense.managerName }}</td>
+              <td><span class="expense-category">{{ categoryLabel(expense.category) }}</span></td>
+              <td class="expense-amount">{{ formatMoney(expense.amount) }}</td>
+              <td>
+                @if (expense.attachmentSize > 0) {
+                  <button
+                    class="attachment-button"
+                    type="button"
+                    [disabled]="loadingAttachmentId() === expense.id"
+                    (click)="downloadAttachment(expense)"
+                  >
+                    <app-lucide-icon name="download" />
+                    <span>{{ expense.attachmentName }}</span>
+                    <small>{{ formatFileSize(expense.attachmentSize) }}</small>
+                  </button>
+                } @else {
+                  <span class="no-attachment">Aucun</span>
+                }
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-action edit" type="button" title="Modifier" (click)="openEdit(expense)">
+                    <app-lucide-icon name="pencil" />
+                    <span>Modifier</span>
+                  </button>
+                  <button class="icon-action delete" type="button" title="Supprimer" (click)="requestDelete(expense)">
+                    <app-lucide-icon name="trash-2" />
+                    <span>Supprimer</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7"><div class="empty-state">Aucune dépense ne correspond aux critères.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="expense-cards">
+      @for (expense of pageExpenses(); track expense.id) {
+        <article>
+          <header>
+            <div>
+              <span>{{ formatDate(expense.expenseDate) }}</span>
+              <strong>{{ expense.propertyReference }}</strong>
+            </div>
+            <strong>{{ formatMoney(expense.amount) }}</strong>
+          </header>
+          <p>{{ categoryLabel(expense.category) }} · {{ expense.managerName }}</p>
+          @if (expense.comment) { <small>{{ expense.comment }}</small> }
+          <footer>
+            @if (expense.attachmentSize > 0) {
+              <button class="secondary-button" type="button" (click)="downloadAttachment(expense)">
+                <app-lucide-icon name="download" /> Justificatif
+              </button>
+            }
+            <button class="icon-action edit" type="button" title="Modifier" (click)="openEdit(expense)">
+              <app-lucide-icon name="pencil" /><span>Modifier</span>
+            </button>
+            <button class="icon-action delete" type="button" title="Supprimer" (click)="requestDelete(expense)">
+              <app-lucide-icon name="trash-2" /><span>Supprimer</span>
+            </button>
+          </footer>
+        </article>
+      }
+    </div>
+
+    <footer class="pagination-bar">
+      <span>Page {{ page() > pageCount() ? pageCount() : page() }} / {{ pageCount() }} · {{ filteredExpenses().length }} dépense(s)</span>
+      <div>
+        <button class="page-button" type="button" [disabled]="page() <= 1" (click)="setPage(page() - 1)">Précédent</button>
+        <button class="page-button" type="button" [disabled]="page() >= pageCount()" (click)="setPage(page() + 1)">Suivant</button>
+      </div>
+    </footer>
+  </section>
+</section>
+
+@if (isModalOpen()) {
+  <div class="modal-backdrop" role="presentation" (click)="closeModal()">
+    <section class="modal-card expense-modal" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title" (click)="$event.stopPropagation()">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Dépense immobilière</p>
+          <h2 id="expense-modal-title">{{ editingExpense() ? 'Modifier la dépense' : 'Ajouter une dépense' }}</h2>
+          <p>Le gérant est automatiquement déterminé à partir du bien sélectionné.</p>
+        </div>
+        <button class="ghost-button" type="button" (click)="closeModal()">Fermer</button>
+      </header>
+
+      <form class="form-grid expense-form" [formGroup]="expenseForm" (ngSubmit)="saveExpense()">
+        <label>
+          Bien
+          <select formControlName="propertyId">
+            @for (property of store.visibleProperties(); track property.id) {
+              <option [value]="property.id">{{ property.reference }} · {{ property.district || property.address }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Gérant du bien
+          <input [value]="managerNameForSelectedProperty()" readonly />
+        </label>
+
+        <label>
+          Catégorie
+          <select formControlName="category">
+            @for (category of categories; track category.value) {
+              <option [value]="category.value">{{ category.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Montant
+          <input type="number" min="1" formControlName="amount" placeholder="Montant en F CFA" />
+        </label>
+
+        <label>
+          Date de la dépense
+          <input type="date" formControlName="expenseDate" />
+        </label>
+
+        <label class="full-span">
+          Commentaire
+          <textarea rows="4" formControlName="comment" placeholder="Objet, fournisseur, détails de l’intervention…"></textarea>
+        </label>
+
+        <div class="attachment-field full-span">
+          <label class="file-drop">
+            <app-lucide-icon name="paperclip" />
+            <span>Ajouter ou remplacer le justificatif</span>
+            <small>Image ou PDF · 5 Mo maximum</small>
+            <input type="file" accept="image/*,application/pdf" (change)="selectAttachment($event)" />
+          </label>
+
+          @if (attachment(); as file) {
+            <div class="selected-attachment">
+              <span>{{ file.name }} · {{ formatFileSize(file.size) }}</span>
+              <button class="ghost-button" type="button" (click)="removeAttachment()">Retirer</button>
+            </div>
+          } @else if (editingExpense()?.attachmentSize && !removeExistingAttachment()) {
+            <div class="selected-attachment">
+              <span>{{ editingExpense()?.attachmentName }} · {{ formatFileSize(editingExpense()?.attachmentSize || 0) }}</span>
+              <button class="ghost-button danger" type="button" (click)="removeAttachment()">Supprimer le justificatif</button>
+            </div>
+          }
+
+          @if (attachmentError()) { <p class="form-error">{{ attachmentError() }}</p> }
+        </div>
+
+        <div class="form-actions full-span">
+          <button class="secondary-button" type="button" (click)="closeModal()">Annuler</button>
+          <button class="primary-button" type="submit" [disabled]="submitting() || expenseForm.invalid">
+            @if (submitting()) { <span class="button-loader" aria-hidden="true"></span> }
+            {{ editingExpense() ? 'Enregistrer les modifications' : 'Créer la dépense' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (deletingExpense(); as expense) {
+  <div class="modal-backdrop" role="presentation" (click)="cancelDelete()">
+    <section class="modal-card delete-expense-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="modal-head">
+        <div>
+          <p class="eyebrow">Confirmation</p>
+          <h2>Supprimer cette dépense ?</h2>
+          <p>{{ expense.propertyReference }} · {{ categoryLabel(expense.category) }} · {{ formatMoney(expense.amount) }}</p>
+        </div>
+      </header>
+      <p>Cette opération supprimera également le justificatif associé et ne pourra pas être annulée.</p>
+      <div class="form-actions">
+        <button class="secondary-button" type="button" (click)="cancelDelete()">Annuler</button>
+        <button class="ghost-button danger" type="button" [disabled]="submitting()" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </section>
+  </div>
+}

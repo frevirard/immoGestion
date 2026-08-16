@@ -2,10 +2,11 @@ import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ImmoStore } from '../../immo-store';
 import { PropertyUnit } from '../../models';
+import { LucideIconComponent } from '../lucide-icon.component';
 
 @Component({
   selector: 'app-property-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LucideIconComponent],
   templateUrl: './property-form.component.html',
   styleUrl: './property-form.component.scss',
 })
@@ -33,34 +34,42 @@ export class PropertyFormComponent {
     charges: [0, [Validators.required, Validators.min(0)]],
     managerId: [''],
     ownerId: [''],
+    tenantId: [''],
     notes: [''],
   });
 
-  openCreateProperty(): void {
+  async openCreateProperty(): Promise<void> {
+    await this.store.refresh();
+    await this.store.refreshTenants();
     this.selectedPropertyId.set(null);
     this.resetForm();
     this.isPropertyModalOpen.set(true);
   }
 
-  openEditProperty(property: PropertyUnit): void {
-    this.selectedPropertyId.set(property.id);
+  async openEditProperty(property: PropertyUnit): Promise<void> {
+    await this.store.refresh();
+    await this.store.refreshTenants();
+    const freshProperty = this.store.properties().find((candidate) => candidate.id === property.id) ?? property;
+
+    this.selectedPropertyId.set(freshProperty.id);
     this.propertyForm.reset({
-      reference: property.reference,
-      address: property.address,
-      district: property.district,
-      category: property.category,
-      bedroomCount: property.bedroomCount,
-      hasLivingRoom: property.hasLivingRoom,
-      hasInternalWc: property.hasInternalWc,
-      hasPrivateShower: property.hasPrivateShower,
-      hasKitchen: property.hasKitchen,
-      hasBalcony: property.hasBalcony,
-      rent: property.rent,
-      deposit: property.deposit,
-      charges: property.charges,
-      managerId: property.managerId ?? '',
-      ownerId: property.ownerId ?? '',
-      notes: property.notes ?? '',
+      reference: freshProperty.reference,
+      address: freshProperty.address,
+      district: freshProperty.district,
+      category: freshProperty.category,
+      bedroomCount: freshProperty.bedroomCount,
+      hasLivingRoom: freshProperty.hasLivingRoom,
+      hasInternalWc: freshProperty.hasInternalWc,
+      hasPrivateShower: freshProperty.hasPrivateShower,
+      hasKitchen: freshProperty.hasKitchen,
+      hasBalcony: freshProperty.hasBalcony,
+      rent: freshProperty.rent,
+      deposit: freshProperty.deposit,
+      charges: freshProperty.charges,
+      managerId: freshProperty.managerId ?? '',
+      ownerId: freshProperty.ownerId ?? '',
+      tenantId: freshProperty.tenantId ?? '',
+      notes: freshProperty.notes ?? '',
     });
     this.isPropertyModalOpen.set(true);
   }
@@ -69,35 +78,42 @@ export class PropertyFormComponent {
     this.isPropertyModalOpen.set(false);
   }
 
-  saveProperty(): void {
+  async saveProperty(): Promise<void> {
     if (this.propertyForm.invalid) {
       this.propertyForm.markAllAsTouched();
       return;
     }
 
-    const input = this.propertyForm.getRawValue();
+    const { tenantId, ...input } = this.propertyForm.getRawValue();
     const selectedPropertyId = this.selectedPropertyId();
 
-    if (selectedPropertyId) {
-      const property = this.store.updateProperty(selectedPropertyId, input);
-      this.notice.emit(`Bien ${property.reference} mis à jour.`);
-      this.closePropertyModal();
-      return;
-    }
+    try {
+      if (selectedPropertyId) {
+        const previousProperty = this.store.properties().find((property) => property.id === selectedPropertyId);
+        const property = await this.store.updateProperty(selectedPropertyId, input);
+        await this.syncTenantAssignment(property.id, tenantId, previousProperty?.tenantId);
+        this.notice.emit(`Bien ${property.reference} mis à jour.`);
+        this.closePropertyModal();
+        return;
+      }
 
-    const property = this.store.addProperty(input);
-    this.selectedPropertyId.set(property.id);
-    this.notice.emit(`Bien ${property.reference} créé.`);
-    this.closePropertyModal();
+      const property = await this.store.addProperty(input);
+      await this.syncTenantAssignment(property.id, tenantId, undefined);
+      this.selectedPropertyId.set(property.id);
+      this.notice.emit(`Bien ${property.reference} créé.`);
+      this.closePropertyModal();
+    } catch {
+      this.notice.emit('Impossible d’enregistrer ce bien.');
+    }
   }
 
-  deleteProperty(property: PropertyUnit): void {
+  async deleteProperty(property: PropertyUnit): Promise<void> {
     if (!globalThis.confirm(`Supprimer le bien ${property.reference} ?`)) {
       return;
     }
 
     try {
-      this.store.deleteProperty(property.id);
+      await this.store.deleteProperty(property.id);
 
       if (this.selectedPropertyId() === property.id) {
         this.selectedPropertyId.set(null);
@@ -129,6 +145,15 @@ export class PropertyFormComponent {
     return property.tenantId ? 'Occupé' : 'Historique';
   }
 
+  canSelectTenant(tenantId: string): boolean {
+    const selectedPropertyId = this.selectedPropertyId() ?? undefined;
+    return !this.store.isTenantAttachedToAnotherProperty(tenantId, selectedPropertyId);
+  }
+
+  tenantOptionLabel(tenantId: string): string {
+    return this.canSelectTenant(tenantId) ? '' : ' — déjà rattaché';
+  }
+
   formatMoney(amount: number): string {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -156,7 +181,27 @@ export class PropertyFormComponent {
       charges: 0,
       managerId: '',
       ownerId: '',
+      tenantId: '',
       notes: '',
     });
+  }
+
+  private async syncTenantAssignment(
+    propertyId: string,
+    tenantId: string,
+    previousTenantId?: string,
+  ): Promise<void> {
+    if ((tenantId || '') === (previousTenantId || '')) {
+      return;
+    }
+
+    if (tenantId) {
+      await this.store.assignTenantToProperty(propertyId, tenantId, Boolean(previousTenantId));
+      return;
+    }
+
+    if (previousTenantId) {
+      await this.store.unassignTenantFromProperty(propertyId);
+    }
   }
 }

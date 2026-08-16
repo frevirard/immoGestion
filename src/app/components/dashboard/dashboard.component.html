@@ -1,66 +1,464 @@
-<section class="hero-card">
-  <div>
-    <p class="eyebrow">{{ formatMonth(selectedMonth) }}</p>
-    <h2>Vue de recouvrement</h2>
-    <p>
-      Suivi des loyers attendus, encaissés, déduits de la caution et restant à récupérer.
-    </p>
-  </div>
-</section>
-
-<section class="kpi-grid" aria-label="Indicateurs du mois">
+<section class="kpi-grid global-kpis" aria-label="Résumé global du parc">
   <article>
     <span>Biens</span>
-    <strong>{{ portfolioStats().total }}</strong>
+    <strong>{{ globalStats().total }}</strong>
   </article>
   <article>
-    <span>À encaisser</span>
-    <strong>{{ formatMoney(portfolioStats().remainingAmount) }}</strong>
+    <span>Loués</span>
+    <strong>{{ globalStats().occupied }}</strong>
   </article>
   <article>
-    <span>Encaissé</span>
-    <strong>{{ formatMoney(portfolioStats().collectedAmount) }}</strong>
+    <span>Libres</span>
+    <strong>{{ globalStats().available }}</strong>
   </article>
   <article>
-    <span>Déduit caution</span>
-    <strong>{{ formatMoney(portfolioStats().deductedFromDeposit) }}</strong>
+    <span>Loyer mensuel attendu</span>
+    <strong>{{ formatMoney(globalStats().monthlyExpectedAmount) }}</strong>
+  </article>
+  <article>
+    <span>Encaissé historique</span>
+    <strong>{{ formatMoney(globalStats().collectedAmount) }}</strong>
+  </article>
+  <article>
+    <span>Reste historique</span>
+    <strong>{{ formatMoney(globalStats().remainingAmount) }}</strong>
+  </article>
+  <article>
+    <span>Dépenses historiques</span>
+    <strong>{{ formatMoney(globalStats().expenseAmount) }}</strong>
+  </article>
+  <article>
+    <span>Encaissement net</span>
+    <strong>{{ formatMoney(globalStats().netCollectedAmount) }}</strong>
   </article>
 </section>
 
-<section class="panel">
+<section class="panel dashboard-recovery-panel">
   <div class="section-heading compact">
-    <h2>Loyers à récupérer par agent</h2>
-    <span>{{ formatMonth(selectedMonth) }}</span>
+    <div>
+      <span>Suivi par période</span>
+      <h2>Loyers à récupérer par agent</h2>
+      <p>{{ periodLabel() }}</p>
+    </div>
   </div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Agent</th>
-          <th>Biens loués</th>
-          <th>Attendu</th>
-          <th>Encaissé</th>
-          <th>Déduit caution</th>
-          <th>Reste</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (summary of rentSummaries(); track summary.managerId) {
-          <tr>
-            <td>{{ summary.managerName }}</td>
-            <td>{{ summary.occupiedCount }}</td>
-            <td>{{ formatMoney(summary.expectedAmount) }}</td>
-            <td>{{ formatMoney(summary.collectedAmount) }}</td>
-            <td>{{ formatMoney(summary.deductedFromDeposit) }}</td>
-            <td><strong>{{ formatMoney(summary.remainingAmount) }}</strong></td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6">Aucun gérant enregistré.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <div class="period-filter" aria-label="Filtrer les loyers par période">
+    <label>
+      Date de début
+      <input type="date" [value]="startDate()" (input)="setStartDate($event)" />
+    </label>
+    <label>
+      Date de fin
+      <input type="date" [value]="endDate()" (input)="setEndDate($event)" />
+    </label>
+    <button class="ghost-button" type="button" (click)="resetPeriod()">Réinitialiser</button>
   </div>
+
+  <div class="dashboard-tabs" role="tablist" aria-label="Vue du suivi des loyers">
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'table'"
+      [attr.aria-selected]="activeTab() === 'table'"
+      (click)="setActiveTab('table')"
+    >
+      Tableau
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'charts'"
+      [attr.aria-selected]="activeTab() === 'charts'"
+      (click)="setActiveTab('charts')"
+    >
+      Graphiques
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [class.active]="activeTab() === 'expenses'"
+      [attr.aria-selected]="activeTab() === 'expenses'"
+      (click)="setActiveTab('expenses')"
+    >
+      Dépenses
+    </button>
+  </div>
+
+  @if (activeTab() === 'table') {
+    <div class="dashboard-tab-panel">
+      <div class="table-wrap">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Biens loués</th>
+              <th>Attendu</th>
+              <th>Encaissé</th>
+              <th>Déduit caution</th>
+              <th>Impayés</th>
+              <th>Reste</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (summary of paginatedRentSummaries(); track summary.managerId) {
+              <tr
+                class="manager-summary-row"
+                [class.active]="isManagerSelected(summary.managerId)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Voir le détail des loyers de ' + summary.managerName"
+                (click)="selectManager(summary.managerId)"
+                (keydown.enter)="selectManager(summary.managerId)"
+                (keydown.space)="selectManager(summary.managerId); $event.preventDefault()"
+              >
+                <td>{{ summary.managerName }}</td>
+                <td>{{ summary.occupiedCount }}</td>
+                <td>{{ formatMoney(summary.expectedAmount) }}</td>
+                <td>{{ formatMoney(summary.collectedAmount) }}</td>
+                <td>{{ formatMoney(summary.deductedFromDeposit) }}</td>
+                <td>
+                  <span class="unpaid-badge" [class.clear]="summary.unpaidRentCount === 0">
+                    {{ summary.unpaidRentCount }}
+                  </span>
+                </td>
+                <td><strong>{{ formatMoney(summary.remainingAmount) }}</strong></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">Aucun gérant enregistré pour cette période.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="dashboard-pagination" aria-label="Pagination des agents">
+        <span>
+          Page {{ currentTablePage() }} / {{ totalTablePages() }} ·
+          {{ rentSummaries().length }} agent(s)
+        </span>
+
+        @if (totalTablePages() > 1) {
+          <div>
+            <button class="ghost-button" type="button" [disabled]="currentTablePage() === 1" (click)="previousPage()">
+              Précédent
+            </button>
+            @for (page of visibleTablePages(); track page) {
+              <button
+                class="ghost-button page-button"
+                type="button"
+                [class.active]="currentTablePage() === page"
+                (click)="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+            <button
+              class="ghost-button"
+              type="button"
+              [disabled]="currentTablePage() === totalTablePages()"
+              (click)="nextPage()"
+            >
+              Suivant
+            </button>
+          </div>
+        }
+      </footer>
+
+      @if (selectedManagerDetail(); as detail) {
+        <section class="manager-detail-panel" aria-label="Détail des loyers du gérant sélectionné">
+          <header class="manager-detail-head">
+            <div>
+              <span>Détail agent</span>
+              <h3>{{ detail.summary.managerName }}</h3>
+              <p>
+                {{ detail.summary.occupiedCount }} bien(s) loué(s) ·
+                {{ detail.summary.unpaidRentCount }} loyer(s) non encaissé(s) sur la période
+              </p>
+            </div>
+            <button class="ghost-button" type="button" (click)="clearSelectedManager()">Fermer</button>
+          </header>
+
+          <dl class="manager-detail-kpis">
+            <div>
+              <dt>Attendu</dt>
+              <dd>{{ formatMoney(detail.summary.expectedAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Encaissé</dt>
+              <dd>{{ formatMoney(detail.summary.collectedAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Déduit caution</dt>
+              <dd>{{ formatMoney(detail.summary.deductedFromDeposit) }}</dd>
+            </div>
+            <div>
+              <dt>Reste</dt>
+              <dd>{{ formatMoney(detail.summary.remainingAmount) }}</dd>
+            </div>
+          </dl>
+
+          <div class="manager-detail-grid">
+            <article class="detail-card">
+              <div class="detail-card-head">
+                <span>Loyers non encaissés</span>
+                <strong>{{ detail.unpaidEntries.length }}</strong>
+              </div>
+
+              @if (detail.unpaidEntries.length) {
+                <div class="detail-mini-table">
+                  @for (entry of detail.unpaidEntries; track entry.key) {
+                    <div class="detail-rent-row">
+                      <div>
+                        <strong>{{ entry.propertyReference }}</strong>
+                        <small>{{ entry.propertyCategory }} · {{ entry.tenantName }}</small>
+                      </div>
+                      <span>{{ formatMonth(entry.month) }}</span>
+                      <em>{{ formatMoney(entry.remainingAmount) }}</em>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="detail-empty-state">Aucun loyer restant à encaisser pour ce gérant.</p>
+              }
+            </article>
+
+            <article class="detail-card">
+              <div class="detail-card-head">
+                <span>Détail des montants encaissés</span>
+                <strong>{{ detail.collectedEntries.length }}</strong>
+              </div>
+
+              @if (detail.collectedEntries.length) {
+                <div class="detail-mini-table">
+                  @for (entry of detail.collectedEntries; track entry.key) {
+                    <div class="detail-rent-row collected-row">
+                      <div>
+                        <strong>{{ entry.propertyReference }}</strong>
+                        <small>
+                          {{ formatMonth(entry.month) }} · {{ entry.tenantName }}
+                          @if (entry.paidAt) {
+                            · reçu le {{ formatDate(entry.paidAt) }}
+                          }
+                        </small>
+                      </div>
+                      <span>{{ rentStatusLabel(entry) }}</span>
+                      <em>
+                        {{ formatMoney(entry.collectedAmount) }}
+                        @if (entry.deductedFromDeposit > 0) {
+                          <small>+ {{ formatMoney(entry.deductedFromDeposit) }} caution</small>
+                        }
+                      </em>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="detail-empty-state">Aucun encaissement enregistré sur cette période.</p>
+              }
+            </article>
+          </div>
+
+          <div class="table-wrap manager-full-detail">
+            <table>
+              <thead>
+                <tr>
+                  <th>Mois</th>
+                  <th>Bien</th>
+                  <th>Locataire</th>
+                  <th>Attendu</th>
+                  <th>Encaissé</th>
+                  <th>Déduit</th>
+                  <th>Reste</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of detail.entries; track entry.key) {
+                  <tr>
+                    <td>{{ formatMonth(entry.month) }}</td>
+                    <td>
+                      <strong>{{ entry.propertyReference }}</strong>
+                      <small>{{ entry.propertyCategory }}</small>
+                    </td>
+                    <td>{{ entry.tenantName }}</td>
+                    <td>{{ formatMoney(entry.expectedAmount) }}</td>
+                    <td>{{ formatMoney(entry.collectedAmount) }}</td>
+                    <td>{{ formatMoney(entry.deductedFromDeposit) }}</td>
+                    <td><strong>{{ formatMoney(entry.remainingAmount) }}</strong></td>
+                    <td>
+                      <span class="rent-state" [class.clear]="entry.remainingAmount === 0">
+                        {{ rentStatusLabel(entry) }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8">Aucune échéance de loyer trouvée pour ce gérant.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      } @else {
+        <p class="manager-detail-hint">Clique sur un gérant pour consulter ses loyers non encaissés et le détail de ses encaissements.</p>
+      }
+    </div>
+  } @else if (activeTab() === 'charts') {
+    <div class="dashboard-tab-panel chart-grid">
+      <article class="chart-card recovery-card">
+        <div class="chart-head">
+          <div>
+            <span>Répartition</span>
+            <h3>Recouvrement sur la période</h3>
+          </div>
+          <strong>{{ formatMoney(periodStats().expectedAmount) }}</strong>
+        </div>
+
+        <div class="stacked-meter" aria-label="Répartition du recouvrement">
+          @for (item of statusBreakdown(); track item.key) {
+            <i
+              [class.collected]="item.key === 'collected'"
+              [class.deducted]="item.key === 'deducted'"
+              [class.remaining]="item.key === 'remaining'"
+              [style.width.%]="item.percent"
+            ></i>
+          }
+        </div>
+
+        <div class="breakdown-list">
+          @for (item of statusBreakdown(); track item.key) {
+            <div>
+              <span
+                [class.collected]="item.key === 'collected'"
+                [class.deducted]="item.key === 'deducted'"
+                [class.remaining]="item.key === 'remaining'"
+              ></span>
+              <p>{{ item.label }}</p>
+              <strong>{{ formatMoney(item.amount) }}</strong>
+              <em>{{ item.percent }}%</em>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <span>Agents</span>
+            <h3>Reste à récupérer</h3>
+          </div>
+        </div>
+
+        <div class="agent-bars">
+          @for (summary of chartAgentSummaries(); track summary.managerId) {
+            <div class="agent-bar-row">
+              <div>
+                <span>{{ summary.managerName }}</span>
+                <strong>{{ formatMoney(summary.remainingAmount) }}</strong>
+              </div>
+              <div class="bar-track">
+                <i [style.width.%]="barPercent(summary.remainingAmount, maxAgentRemaining())"></i>
+              </div>
+            </div>
+          } @empty {
+            <p class="empty-chart">Aucune donnée à afficher sur cette période.</p>
+          }
+        </div>
+      </article>
+
+      <article class="chart-card trend-card">
+        <div class="chart-head">
+          <div>
+            <span>Tendance</span>
+            <h3>Évolution mensuelle</h3>
+          </div>
+          <small>12 derniers mois visibles</small>
+        </div>
+
+        <div class="trend-chart" aria-label="Tendance mensuelle du recouvrement">
+          @for (point of monthlyTrend(); track point.month) {
+            <div class="trend-column">
+              <div class="trend-bars">
+                <span
+                  class="remaining"
+                  [style.height.%]="barPercent(point.remainingAmount, maxTrendAmount())"
+                  title="Reste"
+                ></span>
+                <span
+                  class="deducted"
+                  [style.height.%]="barPercent(point.deductedFromDeposit, maxTrendAmount())"
+                  title="Déduit caution"
+                ></span>
+                <span
+                  class="collected"
+                  [style.height.%]="barPercent(point.collectedAmount, maxTrendAmount())"
+                  title="Encaissé"
+                ></span>
+              </div>
+              <small>{{ formatShortMonth(point.month) }}</small>
+            </div>
+          } @empty {
+            <p class="empty-chart">Aucune tendance disponible sur cette période.</p>
+          }
+        </div>
+      </article>
+    </div>
+  } @else {
+    <div class="dashboard-tab-panel expense-dashboard">
+      <dl class="expense-dashboard-kpis">
+        <div><dt>Dépenses</dt><dd>{{ expenseStats().count }}</dd></div>
+        <div><dt>Total période</dt><dd>{{ formatMoney(expenseStats().amount) }}</dd></div>
+        <div><dt>Moyenne</dt><dd>{{ formatMoney(expenseStats().average) }}</dd></div>
+        <div><dt>Biens concernés</dt><dd>{{ expenseStats().properties }}</dd></div>
+      </dl>
+
+      <div class="expense-chart-grid">
+        <article class="chart-card">
+          <div class="chart-head">
+            <div><span>Catégories</span><h3>Nature des dépenses</h3></div>
+          </div>
+          <div class="expense-bars">
+            @for (item of expensesByCategory(); track item.key) {
+              <div class="expense-bar-row">
+                <div><span>{{ item.label }}</span><strong>{{ formatMoney(item.amount) }}</strong></div>
+                <div class="bar-track"><i [style.width.%]="barPercent(item.amount, maxExpenseAmount())"></i></div>
+                <small>{{ item.count }} opération(s)</small>
+              </div>
+            } @empty { <p class="empty-chart">Aucune dépense sur cette période.</p> }
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="chart-head">
+            <div><span>Biens</span><h3>Dépenses par bien</h3></div>
+          </div>
+          <div class="expense-bars">
+            @for (item of expensesByProperty(); track item.key) {
+              <div class="expense-bar-row">
+                <div><span>{{ item.label }}</span><strong>{{ formatMoney(item.amount) }}</strong></div>
+                <div class="bar-track property-expense"><i [style.width.%]="barPercent(item.amount, maxExpenseAmount())"></i></div>
+                <small>{{ item.count }} opération(s)</small>
+              </div>
+            } @empty { <p class="empty-chart">Aucune dépense par bien.</p> }
+          </div>
+        </article>
+
+        <article class="chart-card expense-agent-card">
+          <div class="chart-head">
+            <div><span>Agents</span><h3>Dépenses suivies par gérant</h3></div>
+          </div>
+          <div class="expense-bars">
+            @for (item of expensesByManager(); track item.key) {
+              <div class="expense-bar-row">
+                <div><span>{{ item.label }}</span><strong>{{ formatMoney(item.amount) }}</strong></div>
+                <div class="bar-track manager-expense"><i [style.width.%]="barPercent(item.amount, maxExpenseAmount())"></i></div>
+                <small>{{ item.count }} opération(s)</small>
+              </div>
+            } @empty { <p class="empty-chart">Aucune dépense par gérant.</p> }
+          </div>
+        </article>
+      </div>
+    </div>
+  }
 </section>

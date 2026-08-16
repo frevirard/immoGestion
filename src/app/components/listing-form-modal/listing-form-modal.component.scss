@@ -1,0 +1,41 @@
+:host {
+  display: contents;
+}
+
+.listing-modal {
+  width: min(100%, 1040px);
+}
+
+.duration-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  gap: 12px;
+}
+
+.checkbox-line {
+  display: inline-flex;
+  align-items: center;
+  align-self: end;
+  gap: 10px;
+  min-height: 52px;
+  border: 1px solid rgba(34, 47, 88, 0.18);
+  background: var(--cream);
+  padding: 12px 14px;
+}
+
+.checkbox-line input {
+  width: auto;
+  accent-color: var(--gold);
+}
+
+.file-drop small {
+  display: block;
+  margin-top: 10px;
+  color: var(--text);
+}
+
+@media (max-width: 680px) {
+  .duration-grid {
+    grid-template-columns: 1fr;
+  }
+}
