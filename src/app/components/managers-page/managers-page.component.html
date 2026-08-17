@@ -38,7 +38,7 @@
         </label>
         <label>
           Email
-          <input type="email" formControlName="email" placeholder="gerant@immo.local" />
+          <input type="email" formControlName="email" placeholder="gerant@exemple.com" autocomplete="email" />
         </label>
         <label>
           Téléphone
@@ -46,9 +46,19 @@
         </label>
         <label>
           Mot de passe
-          <input type="text" formControlName="password" />
+          <input
+            type="password"
+            formControlName="password"
+            placeholder="6 caractères minimum"
+            autocomplete="new-password"
+          />
         </label>
-        <button class="primary-button" type="submit">Créer le gérant</button>
+        <button class="primary-button" type="submit" [disabled]="isCreatingManager()">
+          @if (isCreatingManager()) {
+            <span class="button-loader" aria-hidden="true"></span>
+          }
+          {{ isCreatingManager() ? 'Création…' : 'Créer le gérant' }}
+        </button>
       </form>
     </section>
   } @else {

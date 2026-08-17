@@ -6,6 +6,8 @@ import {
   ArrowLeftRight,
   Building2,
   Check,
+  ChevronLeft,
+  ChevronRight,
   CircleDollarSign,
   CircleUserRound,
   CreditCard,
@@ -45,6 +47,8 @@ export type LucideIconName =
   | 'arrow-left-right'
   | 'building-2'
   | 'check'
+  | 'chevron-left'
+  | 'chevron-right'
   | 'circle-user-round'
   | 'circle-dollar-sign'
   | 'credit-card'
@@ -81,6 +85,8 @@ const ICONS: Record<LucideIconName, IconNode> = {
   'arrow-left-right': ArrowLeftRight,
   'building-2': Building2,
   check: Check,
+  'chevron-left': ChevronLeft,
+  'chevron-right': ChevronRight,
   'circle-user-round': CircleUserRound,
   'circle-dollar-sign': CircleDollarSign,
   'credit-card': CreditCard,

@@ -28,6 +28,7 @@ export class ManagersPageComponent {
   readonly rejectionUser = signal<User | null>(null);
   readonly rejectionReason = signal('');
   readonly rejectionError = signal('');
+  readonly isCreatingManager = signal(false);
 
   readonly users = computed(() =>
     [...this.store.state().users].sort((first, second) => {
@@ -56,7 +57,7 @@ export class ManagersPageComponent {
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
-    password: ['gerant123', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   setTab(tab: ManagersTab): void {
@@ -64,18 +65,26 @@ export class ManagersPageComponent {
   }
 
   async createManager(): Promise<void> {
+    if (this.isCreatingManager()) {
+      return;
+    }
+
     if (this.managerForm.invalid) {
       this.managerForm.markAllAsTouched();
       return;
     }
 
+    this.isCreatingManager.set(true);
+
     try {
       const manager = await this.store.addManager(this.managerForm.getRawValue());
-      this.managerForm.reset({ name: '', email: '', phone: '', password: 'gerant123' });
+      this.managerForm.reset({ name: '', email: '', phone: '', password: '' });
       this.notice.emit(`Gérant ${manager.name} ajouté.`);
       this.activeTab.set('users');
     } catch {
       this.notice.emit('Impossible de créer ce gérant. Vérifie que l’email est unique.');
+    } finally {
+      this.isCreatingManager.set(false);
     }
   }
 

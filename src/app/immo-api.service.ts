@@ -10,6 +10,7 @@ import {
   MarketplaceListing,
   PropertyComment,
   PropertyCommentPhoto,
+  ProfilePhotoInput,
   PropertyExpense,
   PropertyExpenseInput,
   PropertyOwner,
@@ -59,6 +60,14 @@ export class ImmoApiService {
 
   updateUserProfile(userId: string, input: UserProfileInput) {
     return this.http.put<User>(`${this.baseUrl}/users/${userId}/profile`, input);
+  }
+
+  updateUserProfilePhoto(userId: string, input: ProfilePhotoInput) {
+    return this.http.put<User>(`${this.baseUrl}/users/${userId}/profile-photo`, input);
+  }
+
+  removeUserProfilePhoto(userId: string) {
+    return this.http.delete<User>(`${this.baseUrl}/users/${userId}/profile-photo`);
   }
 
   updatePassword(userId: string, input: PasswordUpdateInput) {

@@ -1,3 +1,132 @@
 :host {
   display: block;
 }
+
+.app-bootstrap-screen {
+  position: fixed;
+  z-index: 2000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(99, 102, 241, 0.16), transparent 34%),
+    radial-gradient(circle at 82% 76%, rgba(14, 165, 233, 0.12), transparent 32%),
+    var(--gray-50);
+  padding: 1rem;
+}
+
+.app-bootstrap-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(22rem, 100%);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+  backdrop-filter: blur(14px);
+  animation: bootstrap-card-in 0.38s var(--ease) both;
+}
+
+.app-bootstrap-brand {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--brand-500), var(--sky-500));
+  box-shadow: 0 10px 24px -14px rgba(79, 70, 229, 0.8);
+  color: var(--white);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.app-bootstrap-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.app-bootstrap-copy strong {
+  color: var(--text-strong);
+  font-size: 0.98rem;
+}
+
+.app-bootstrap-copy span {
+  color: var(--gray-500);
+  font-size: 0.76rem;
+}
+
+.app-bootstrap-spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid var(--brand-100);
+  border-top-color: var(--brand-600);
+  border-radius: 50%;
+  animation: spin 0.72s linear infinite;
+}
+
+.app-loading-indicator {
+  position: fixed;
+  z-index: 1000;
+  top: calc(0.7rem + env(safe-area-inset-top));
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.35rem;
+  border: 1px solid rgba(199, 210, 254, 0.9);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 32px -18px rgba(49, 46, 129, 0.58);
+  color: var(--brand-700);
+  padding: 0.55rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transform: translateX(-50%);
+  backdrop-filter: blur(12px);
+  animation: app-loader-in 0.25s var(--ease) both;
+}
+
+.app-loading-spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid var(--brand-200);
+  border-top-color: var(--brand-600);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes app-loader-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes bootstrap-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-loading-indicator {
+    top: calc(0.45rem + env(safe-area-inset-top));
+    max-width: calc(100vw - 1rem);
+  }
+}

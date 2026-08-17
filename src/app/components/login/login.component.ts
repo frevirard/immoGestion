@@ -20,8 +20,8 @@ export class LoginComponent {
   readonly isRegistering = signal(false);
 
   readonly loginForm = this.fb.group({
-    email: ['admin@immo.local', [Validators.required, Validators.email]],
-    password: ['admin123', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
   });
 
   readonly registerForm = this.fb.group({
@@ -112,11 +112,6 @@ export class LoginComponent {
     this.loginError.set('');
     this.registerError.set('');
     this.registerMessage.set('');
-  }
-
-  async quickLogin(email: string, password: string): Promise<void> {
-    this.loginForm.setValue({ email, password });
-    await this.login();
   }
 
   private registrationErrorMessage(error: unknown): string {

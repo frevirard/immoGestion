@@ -21,6 +21,36 @@
   overflow: hidden;
 }
 
+.navbar-user {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+}
+
+.navbar-user .navbar-user-avatar {
+  display: grid;
+  grid-row: 1 / 4;
+  width: 38px;
+  height: 38px;
+  align-self: center;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  color: var(--brand-600);
+  background: var(--brand-100);
+  letter-spacing: 0;
+}
+
+.navbar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.navbar-user-avatar app-lucide-icon {
+  width: 21px;
+  height: 21px;
+}
+
 .filter-panel {
   position: sticky;
   top: 0;
@@ -464,6 +494,11 @@
   object-fit: cover;
 }
 
+.conversation-cover app-lucide-icon {
+  width: 25px;
+  height: 25px;
+}
+
 .conversation-cover b {
   font-size: 0.78rem;
 }
@@ -566,6 +601,18 @@
   color: var(--cream);
   background: linear-gradient(135deg, var(--coral), var(--violet) 58%, var(--teal));
   font-weight: 800;
+  overflow: hidden;
+}
+
+.chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-avatar app-lucide-icon {
+  width: 23px;
+  height: 23px;
 }
 
 .chat-contact div {
@@ -836,9 +883,11 @@
 
 .detail-carousel img,
 .detail-carousel-placeholder {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
 }
 
 .detail-carousel-placeholder {
@@ -865,6 +914,19 @@
   font-size: 1.4rem;
   line-height: 1;
   transform: translateY(-50%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.carousel-button:hover {
+  color: var(--brand-700);
+  background: var(--white);
+  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.28);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.carousel-button app-lucide-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .carousel-button.previous {

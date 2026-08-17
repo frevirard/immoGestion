@@ -7,12 +7,14 @@ import {
   ListingPropertyType,
   ListingTransactionType,
   MarketplaceListing,
+  ProfilePhotoInput,
   User,
   VerificationRequestInput,
 } from '../../models';
 import { ListingCardComponent } from '../listing-card/listing-card.component';
 import { ListingFormModalComponent } from '../listing-form-modal/listing-form-modal.component';
 import { LucideIconComponent, type LucideIconName } from '../lucide-icon.component';
+import { ProfilePhotoEditorComponent } from '../profile-photo-editor/profile-photo-editor.component';
 
 type UserPortalPage = 'home' | 'my-listings' | 'messages' | 'account';
 type TransactionFilter = 'ALL' | ListingTransactionType;
@@ -36,7 +38,13 @@ type MessageConversation = {
 
 @Component({
   selector: 'app-user-portal',
-  imports: [FormsModule, ListingCardComponent, ListingFormModalComponent, LucideIconComponent],
+  imports: [
+    FormsModule,
+    ListingCardComponent,
+    ListingFormModalComponent,
+    LucideIconComponent,
+    ProfilePhotoEditorComponent,
+  ],
   templateUrl: './user-portal.component.html',
   styleUrl: './user-portal.component.scss',
 })
@@ -79,11 +87,14 @@ export class UserPortalComponent {
   readonly passwordError = signal('');
   readonly verificationError = signal('');
   readonly verificationDocument = signal<VerificationRequestInput | null>(null);
+  readonly isProfilePhotoEditorOpen = signal(false);
+  readonly profilePhotoError = signal('');
   readonly isSavingListing = signal(false);
   readonly busyListingId = signal('');
   readonly isSendingMessage = signal(false);
   readonly isSendingChatMessage = signal(false);
   readonly isSavingProfile = signal(false);
+  readonly isSavingProfilePhoto = signal(false);
   readonly isSavingPassword = signal(false);
   readonly isSendingVerification = signal(false);
   readonly isDeletingAccount = signal(false);
@@ -660,6 +671,62 @@ export class UserPortalComponent {
     }
   }
 
+  openProfilePhotoEditor(): void {
+    this.profilePhotoError.set('');
+    this.isProfilePhotoEditorOpen.set(true);
+  }
+
+  closeProfilePhotoEditor(): void {
+    if (this.isSavingProfilePhoto()) {
+      return;
+    }
+
+    this.profilePhotoError.set('');
+    this.isProfilePhotoEditorOpen.set(false);
+  }
+
+  async saveProfilePhoto(photo: ProfilePhotoInput): Promise<void> {
+    const user = this.store.currentUser();
+
+    if (!user || this.isSavingProfilePhoto()) {
+      return;
+    }
+
+    this.profilePhotoError.set('');
+    this.isSavingProfilePhoto.set(true);
+
+    try {
+      await this.store.updateUserProfilePhoto(user.id, photo);
+      this.notice.set('Photo de profil mise à jour.');
+      this.isProfilePhotoEditorOpen.set(false);
+    } catch {
+      this.profilePhotoError.set('Impossible d’enregistrer la photo de profil. Essaie avec une autre image.');
+    } finally {
+      this.isSavingProfilePhoto.set(false);
+    }
+  }
+
+  async removeProfilePhoto(): Promise<void> {
+    const user = this.store.currentUser();
+
+    if (!user || this.isSavingProfilePhoto()) {
+      return;
+    }
+
+    this.profilePhotoError.set('');
+    this.isSavingProfilePhoto.set(true);
+
+    try {
+      await this.store.removeUserProfilePhoto(user.id);
+      this.notice.set('Photo de profil supprimée.');
+      this.isProfilePhotoEditorOpen.set(false);
+    } catch {
+      this.profilePhotoError.set('Impossible de supprimer la photo de profil.');
+    } finally {
+      this.isSavingProfilePhoto.set(false);
+    }
+  }
+
   async savePassword(): Promise<void> {
     const user = this.store.currentUser();
 
@@ -867,16 +934,9 @@ export class UserPortalComponent {
   }
 
   conversationAvatar(conversation: MessageConversation): string {
-    return conversation.listing?.photos?.[0]?.dataUrl ?? '';
-  }
-
-  userInitials(name?: string): string {
-    const parts = (name || 'IP')
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2);
-
-    return parts.map((part) => part[0]?.toUpperCase()).join('') || 'IP';
+    return (
+      this.store.state().users.find((user) => user.id === conversation.counterpartId)?.profilePhotoDataUrl ?? ''
+    );
   }
 
   messageTime(value?: string): string {
@@ -965,6 +1025,7 @@ export class UserPortalComponent {
     this.accountError.set('');
     this.passwordError.set('');
     this.verificationError.set('');
+    this.profilePhotoError.set('');
   }
 
   private suggestUsername(user: User): string {

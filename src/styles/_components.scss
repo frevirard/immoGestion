@@ -738,34 +738,3 @@ tbody tr:hover {
 .auth-switch {
   margin-bottom: 0.85rem;
 }
-
-.demo-box {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--gray-50);
-  margin-top: 0.9rem;
-  padding: 0.85rem;
-}
-
-.demo-box p {
-  color: var(--brand-600);
-  margin-bottom: 0.6rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.demo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.demo-actions button {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--gray-700);
-  background: var(--white);
-  padding: 0.5rem 0.65rem;
-}

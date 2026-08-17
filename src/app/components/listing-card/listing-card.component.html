@@ -13,7 +13,7 @@
         aria-label="Photo précédente"
         (click)="previousPhoto($event)"
       >
-        ‹
+        <app-lucide-icon name="chevron-left" />
       </button>
       <button
         class="carousel-button next"
@@ -21,7 +21,7 @@
         aria-label="Photo suivante"
         (click)="nextPhoto($event)"
       >
-        ›
+        <app-lucide-icon name="chevron-right" />
       </button>
 
       <div class="carousel-dots" aria-hidden="true">
@@ -50,12 +50,19 @@
 
   <div class="listing-body">
     <div>
-      <p class="micro-copy">{{ locationLabel || 'Adresse à préciser' }}</p>
-      <h3>{{ listing.title }}</h3>
+      <p class="micro-copy" [title]="locationLabel || 'Adresse à préciser'">
+        {{ locationLabel || 'Adresse à préciser' }}
+      </p>
+      <h3 [title]="listing.title">{{ listing.title }}</h3>
       <strong class="listing-price">{{ priceLabel() }}</strong>
     </div>
 
-    <p class="listing-description">{{ listing.description || 'Aucune description détaillée pour le moment.' }}</p>
+    <p
+      class="listing-description"
+      [title]="listing.description || 'Aucune description détaillée pour le moment.'"
+    >
+      {{ listing.description || 'Aucune description détaillée pour le moment.' }}
+    </p>
 
     <dl class="listing-facts">
       <div>

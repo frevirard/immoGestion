@@ -1,0 +1,199 @@
+:host {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-photo-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  background: var(--gray-50);
+  padding: 12px;
+}
+
+.profile-photo-avatar {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  background: var(--brand-100);
+  box-shadow: var(--shadow-sm);
+  color: var(--brand-600);
+}
+
+.profile-photo-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-photo-avatar app-lucide-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.profile-photo-summary > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profile-photo-summary strong {
+  color: var(--gray-900);
+}
+
+.profile-photo-summary small,
+.crop-controls > small {
+  color: var(--gray-500);
+  font-size: 0.78rem;
+}
+
+.profile-photo-summary button,
+.profile-photo-picker,
+.profile-photo-actions button {
+  align-items: center;
+  gap: 7px;
+}
+
+.profile-photo-modal {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 760px);
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.profile-photo-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.8fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.crop-stage {
+  position: relative;
+  display: grid;
+  width: min(100%, 390px);
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--gray-900);
+}
+
+.crop-stage > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.18s ease, object-position 0.18s ease;
+}
+
+.crop-stage > img.current-photo {
+  object-position: center;
+  transform: none;
+}
+
+.crop-guide {
+  position: absolute;
+  inset: 8%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgba(15, 23, 42, 0.24);
+  pointer-events: none;
+}
+
+.crop-placeholder {
+  display: grid;
+  gap: 10px;
+  place-items: center;
+  color: var(--gray-300);
+}
+
+.crop-placeholder app-lucide-icon {
+  width: 54px;
+  height: 54px;
+}
+
+.crop-controls {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+}
+
+.crop-controls label:not(.profile-photo-picker) {
+  display: grid;
+  gap: 7px;
+  color: var(--gray-700);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.crop-controls input[type='range'] {
+  width: 100%;
+  accent-color: var(--brand-500);
+}
+
+.profile-photo-picker {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 42px;
+  border: 1px solid var(--brand-200);
+  border-radius: 12px;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  padding: 9px 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.profile-photo-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
+.profile-photo-actions {
+  justify-content: flex-end;
+}
+
+.profile-photo-actions .danger {
+  margin-right: auto;
+}
+
+@media (max-width: 700px) {
+  .profile-photo-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .profile-photo-summary button {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-photo-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .crop-stage {
+    width: min(100%, 320px);
+  }
+
+  .profile-photo-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .profile-photo-actions .danger {
+    margin-right: 0;
+  }
+}

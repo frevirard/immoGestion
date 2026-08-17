@@ -1,5 +1,9 @@
 <main class="login-page">
-  <section class="login-card">
+  <section
+    class="login-card"
+    [class.authenticating]="isLoggingIn()"
+    [attr.aria-busy]="isLoggingIn()"
+  >
     <div class="brand-mark">
       <span>IP</span>
       <div>
@@ -40,12 +44,24 @@
       <form class="form-stack auth-form" [formGroup]="loginForm" (ngSubmit)="login()">
         <label>
           Email
-          <input type="email" formControlName="email" placeholder="admin@immo.local" />
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="votre@email.com"
+            autocomplete="email"
+            [readOnly]="isLoggingIn()"
+          />
         </label>
 
         <label>
           Mot de passe
-          <input type="password" formControlName="password" placeholder="admin123" />
+          <input
+            type="password"
+            formControlName="password"
+            placeholder="Votre mot de passe"
+            autocomplete="current-password"
+            [readOnly]="isLoggingIn()"
+          />
         </label>
 
         @if (loginError()) {
@@ -62,22 +78,13 @@
           }
           {{ isLoggingIn() ? 'Connexion' : 'Se connecter' }}
         </button>
-      </form>
 
-      <div class="demo-box">
-        <p>Comptes de démonstration</p>
-        <div class="demo-actions">
-          <button type="button" (click)="quickLogin('admin@immo.local', 'admin123')">
-            Admin
-          </button>
-          <button type="button" (click)="quickLogin('awa@immo.local', 'gerant123')">
-            Gérante Awa
-          </button>
-          <button type="button" (click)="quickLogin('jean@immo.local', 'gerant123')">
-            Gérant Jean
-          </button>
-        </div>
-      </div>
+        @if (isLoggingIn()) {
+          <p class="auth-progress" role="status" aria-live="polite">
+            Connexion sécurisée en cours…
+          </p>
+        }
+      </form>
     } @else {
       <form class="form-grid register-grid auth-form" [formGroup]="registerForm" (ngSubmit)="register()">
         <label class="full-span">

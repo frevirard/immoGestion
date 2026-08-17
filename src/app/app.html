@@ -1,9 +1,29 @@
-@if (store.currentUser(); as user) {
-  @if (user.role === 'USER') {
-    <app-user-portal />
-  } @else {
-    <app-shell />
-  }
+@if (!store.isInitialized()) {
+  <main class="app-bootstrap-screen" role="status" aria-live="polite" aria-label="Ouverture de l’application">
+    <div class="app-bootstrap-card">
+      <div class="app-bootstrap-brand" aria-hidden="true">IP</div>
+      <div class="app-bootstrap-copy">
+        <strong>Immo Parc</strong>
+        <span>Préparation de ton espace…</span>
+      </div>
+      <span class="app-bootstrap-spinner" aria-hidden="true"></span>
+    </div>
+  </main>
 } @else {
-  <app-login />
+  @if (store.isLoading()) {
+    <div class="app-loading-indicator" role="status" aria-live="polite">
+      <span class="app-loading-spinner" aria-hidden="true"></span>
+      <span>Chargement des données…</span>
+    </div>
+  }
+
+  @if (store.currentUser(); as user) {
+    @if (user.role === 'USER') {
+      <app-user-portal />
+    } @else {
+      <app-shell />
+    }
+  } @else {
+    <app-login />
+  }
 }

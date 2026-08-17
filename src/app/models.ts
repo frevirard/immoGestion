@@ -48,6 +48,10 @@ export interface User {
   verificationDocumentName?: string;
   verificationDocumentType?: string;
   verificationDocumentSize?: number;
+  profilePhotoName?: string;
+  profilePhotoType?: string;
+  profilePhotoSize?: number;
+  profilePhotoDataUrl?: string;
 }
 
 export interface PropertyOwner {
@@ -327,6 +331,13 @@ export interface UserProfileInput {
   phone: string;
   email: string;
   birthDate: string;
+}
+
+export interface ProfilePhotoInput {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
 }
 
 export interface PasswordUpdateInput {

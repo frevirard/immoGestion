@@ -6,6 +6,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 10px;
+  min-width: 0;
   height: 100%;
   color: #222222;
   border: 1px solid rgba(15, 23, 42, 0.07);
@@ -60,9 +61,13 @@
 }
 
 .listing-cover img {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   transition: transform 0.7s var(--ease);
 }
 
@@ -96,16 +101,24 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
   font-size: 1.25rem;
   line-height: 1;
-  opacity: 0;
-  transform: translateY(-50%) scale(0.95);
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
   transition:
     opacity 0.24s ease,
     transform 0.24s ease;
 }
 
-.listing-card:hover .carousel-button {
-  opacity: 1;
-  transform: translateY(-50%) scale(1);
+.carousel-button:hover {
+  border-color: var(--white);
+  color: var(--brand-700);
+  background: var(--white);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.24);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.carousel-button app-lucide-icon {
+  width: 17px;
+  height: 17px;
 }
 
 .carousel-button.previous {
@@ -187,11 +200,19 @@
   display: grid;
   align-content: start;
   gap: 6px;
-  min-height: 116px;
+  min-width: 0;
+  min-height: 148px;
+  overflow: hidden;
   padding: 0 5px 5px;
 }
 
+.listing-body > div {
+  min-width: 0;
+}
+
 .listing-body h3 {
+  display: -webkit-box;
+  max-width: 100%;
   margin: 1px 0;
   color: #111827;
   font-family: var(--font-body);
@@ -200,7 +221,10 @@
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .micro-copy,
@@ -212,23 +236,35 @@
 }
 
 .micro-copy {
+  display: -webkit-box;
+  max-width: 100%;
   margin-bottom: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .listing-price {
+  display: block;
+  max-width: 100%;
   color: #111827;
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 820;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .listing-description {
-  display: none;
+  display: -webkit-box;
+  max-width: 100%;
   margin-bottom: 0;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -317,7 +353,7 @@
 
   .listing-body {
     gap: 5px;
-    min-height: 96px;
+    min-height: 126px;
   }
 
   .listing-body h3 {
@@ -334,9 +370,13 @@
     font-size: 0.78rem;
   }
 
-  .listing-description,
   .listing-facts {
     display: none;
+  }
+
+  .listing-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
   }
 
   .listing-footer .primary-button,
@@ -354,7 +394,8 @@
   }
 
   .listing-description {
-    display: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
   }
 
   .listing-facts {
@@ -371,7 +412,7 @@
   }
 
   .listing-body {
-    min-height: 88px;
+    min-height: 112px;
   }
 
   .micro-copy,
@@ -420,8 +461,9 @@
 
 .carousel-button {
   border-color: rgba(255, 255, 255, 0.82);
-  color: var(--gray-700);
+  color: var(--gray-900);
   background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.24);
 }
 
 .listing-badges span {

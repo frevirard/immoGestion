@@ -16,6 +16,7 @@ import {
   PropertyExpense,
   PropertyExpenseInput,
   PropertyOwner,
+  ProfilePhotoInput,
   PropertyUnit,
   RegisterInput,
   PasswordUpdateInput,
@@ -41,7 +42,9 @@ export class ImmoStore {
 
   readonly state = signal<AppState>(createEmptyState());
   readonly currentUserId = signal<string | null>(this.readSession());
-  readonly isLoading = signal(false);
+  private readonly loadingOperations = signal(0);
+  readonly isLoading = computed(() => this.loadingOperations() > 0);
+  readonly isInitialized = signal(false);
   readonly apiError = signal('');
 
   readonly currentUser = computed(() => {
@@ -145,7 +148,7 @@ export class ImmoStore {
   }
 
   async refresh(): Promise<void> {
-    this.isLoading.set(true);
+    this.beginLoading();
 
     try {
       const state = await firstValueFrom(this.api.getState().pipe(timeout(API_TIMEOUT_MS)));
@@ -158,17 +161,24 @@ export class ImmoStore {
     } catch {
       this.apiError.set('Backend indisponible. Vérifie que Spring Boot tourne sur le port 8080.');
     } finally {
-      this.isLoading.set(false);
+      this.endLoading();
+      this.isInitialized.set(true);
     }
   }
 
   async refreshTenants(): Promise<Tenant[]> {
-    const tenants = await firstValueFrom(this.api.listTenants().pipe(timeout(API_TIMEOUT_MS)));
-    this.state.update((state) => ({
-      ...state,
-      tenants,
-    }));
-    return tenants;
+    this.beginLoading();
+
+    try {
+      const tenants = await firstValueFrom(this.api.listTenants().pipe(timeout(API_TIMEOUT_MS)));
+      this.state.update((state) => ({
+        ...state,
+        tenants,
+      }));
+      return tenants;
+    } finally {
+      this.endLoading();
+    }
   }
 
   async login(email: string, password: string): Promise<boolean> {
@@ -216,6 +226,18 @@ export class ImmoStore {
 
   async updateUserProfile(userId: string, input: UserProfileInput): Promise<User> {
     const user = await firstValueFrom(this.api.updateUserProfile(userId, input));
+    await this.refresh();
+    return user;
+  }
+
+  async updateUserProfilePhoto(userId: string, input: ProfilePhotoInput): Promise<User> {
+    const user = await firstValueFrom(this.api.updateUserProfilePhoto(userId, input));
+    await this.refresh();
+    return user;
+  }
+
+  async removeUserProfilePhoto(userId: string): Promise<User> {
+    const user = await firstValueFrom(this.api.removeUserProfilePhoto(userId));
     await this.refresh();
     return user;
   }
@@ -446,11 +468,17 @@ export class ImmoStore {
       return [];
     }
 
-    const expenses = await firstValueFrom(
-      this.api.listExpenses(userId).pipe(timeout(API_TIMEOUT_MS)),
-    );
-    this.state.update((state) => ({ ...state, expenses }));
-    return expenses;
+    this.beginLoading();
+
+    try {
+      const expenses = await firstValueFrom(
+        this.api.listExpenses(userId).pipe(timeout(API_TIMEOUT_MS)),
+      );
+      this.state.update((state) => ({ ...state, expenses }));
+      return expenses;
+    } finally {
+      this.endLoading();
+    }
   }
 
   async addExpense(input: PropertyExpenseInput): Promise<PropertyExpense> {
@@ -800,6 +828,14 @@ export class ImmoStore {
 
   private canUseStorage(): boolean {
     return typeof localStorage !== 'undefined';
+  }
+
+  private beginLoading(): void {
+    this.loadingOperations.update((count) => count + 1);
+  }
+
+  private endLoading(): void {
+    this.loadingOperations.update((count) => Math.max(0, count - 1));
   }
 
   private async refreshExpensesForCurrentUser(): Promise<void> {

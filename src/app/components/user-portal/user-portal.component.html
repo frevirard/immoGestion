@@ -40,6 +40,13 @@
       </nav>
 
       <div class="navbar-user" aria-label="Utilisateur connecté">
+        <span class="navbar-user-avatar">
+          @if (store.currentUser()?.profilePhotoDataUrl) {
+            <img [src]="store.currentUser()?.profilePhotoDataUrl" [alt]="'Photo de ' + currentUserDisplayName()" />
+          } @else {
+            <app-lucide-icon name="circle-user-round" />
+          }
+        </span>
         <span>Espace utilisateur</span>
         <strong>{{ currentUserDisplayName() }}</strong>
         <em>Profil standard</em>
@@ -351,9 +358,9 @@
                 >
                   <span class="conversation-cover">
                     @if (conversationAvatar(conversation)) {
-                      <img [src]="conversationAvatar(conversation)" [alt]="conversation.listing?.title || 'Annonce'" />
+                      <img [src]="conversationAvatar(conversation)" [alt]="'Photo de ' + conversation.counterpartName" />
                     } @else {
-                      <b>{{ userInitials(conversation.listing?.title) }}</b>
+                      <app-lucide-icon name="circle-user-round" />
                     }
 
                     @if (conversation.unreadCount) {
@@ -390,7 +397,13 @@
                 </button>
 
                 <div class="chat-contact">
-                  <span class="chat-avatar">{{ userInitials(conversation.counterpartName) }}</span>
+                  <span class="chat-avatar">
+                    @if (conversationAvatar(conversation)) {
+                      <img [src]="conversationAvatar(conversation)" [alt]="'Photo de ' + conversation.counterpartName" />
+                    } @else {
+                      <app-lucide-icon name="circle-user-round" />
+                    }
+                  </span>
                   <div>
                     <strong>{{ conversation.counterpartName }}</strong>
                     <small>{{ conversation.listing?.title || 'Annonce indisponible' }}</small>
@@ -475,6 +488,18 @@
                   {{ verificationStatusLabel() }}
                 </em>
               </div>
+
+              <app-profile-photo-editor
+                [open]="isProfilePhotoEditorOpen()"
+                [currentPhoto]="user.profilePhotoDataUrl || ''"
+                [displayName]="currentUserDisplayName()"
+                [isSaving]="isSavingProfilePhoto()"
+                [serverError]="profilePhotoError()"
+                (openEditor)="openProfilePhotoEditor()"
+                (closeEditor)="closeProfilePhotoEditor()"
+                (savePhoto)="saveProfilePhoto($event)"
+                (removePhoto)="removeProfilePhoto()"
+              />
 
               <div class="form-grid compact-form">
                 <label class="full-span">
@@ -745,7 +770,7 @@
             aria-label="Photo précédente"
             (click)="previousSelectedPhoto($event)"
           >
-            ‹
+            <app-lucide-icon name="chevron-left" />
           </button>
           <button
             class="carousel-button next"
@@ -753,7 +778,7 @@
             aria-label="Photo suivante"
             (click)="nextSelectedPhoto($event)"
           >
-            ›
+            <app-lucide-icon name="chevron-right" />
           </button>
 
           <div class="carousel-dots" aria-hidden="true">
