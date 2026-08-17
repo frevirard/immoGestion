@@ -171,7 +171,7 @@
 @media (max-width: 860px) {
   .manager-tabs {
     position: sticky;
-    top: 0;
+    top: var(--header-height);
     z-index: 12;
     margin-top: 0;
     background: var(--white);

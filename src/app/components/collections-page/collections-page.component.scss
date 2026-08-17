@@ -56,7 +56,7 @@
 
 .collection-toolbar {
   position: sticky;
-  top: 0;
+  top: var(--header-height);
   z-index: 8;
   display: grid;
   gap: 0.85rem;
@@ -126,7 +126,7 @@
 }
 
 .collection-table {
-  max-height: min(58vh, 620px);
+  max-height: none;
   margin-top: 0.9rem;
 }
 

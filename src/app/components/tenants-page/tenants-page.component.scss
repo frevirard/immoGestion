@@ -110,7 +110,7 @@
 }
 
 .tenant-list-shell {
-  overflow: hidden;
+  overflow: clip;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--white);
@@ -126,7 +126,7 @@
 
 .tenant-list-head {
   position: sticky;
-  top: 0;
+  top: var(--header-height);
   z-index: 4;
   border-bottom: 1px solid var(--border);
   color: var(--gray-500);
@@ -140,9 +140,8 @@
 }
 
 .tenant-list {
-  max-height: min(560px, calc(100dvh - 390px));
-  overflow: auto;
-  overscroll-behavior: contain;
+  max-height: none;
+  overflow: visible;
 }
 
 .tenant-management-row {

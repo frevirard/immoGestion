@@ -92,7 +92,7 @@
 }
 
 .dashboard-tab-panel > .table-wrap {
-  max-height: min(420px, calc(100dvh - 410px));
+  max-height: none;
 }
 
 .dashboard-table {
@@ -250,8 +250,9 @@
 .detail-mini-table {
   display: grid;
   gap: 0.4rem;
-  max-height: 260px;
-  overflow: auto;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .detail-rent-row {
@@ -307,7 +308,7 @@
 }
 
 .manager-full-detail {
-  max-height: 350px;
+  max-height: none;
 }
 
 .manager-full-detail table {
