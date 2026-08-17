@@ -70,79 +70,88 @@
     </button>
   </div>
 
-  <div class="tenant-list-shell">
-    <div class="tenant-list-head" aria-hidden="true">
-      <span>Locataire</span>
-      <span>Caution</span>
-      <span>Entrée</span>
-      <span>Statut</span>
-      <span>Actions</span>
-    </div>
-
-    <div class="list-stack tenant-list">
-    @for (tenant of paginatedTenants(); track tenant.id) {
-      <article class="entity-row tenant-management-row" [class.selected]="selectedTenantId() === tenant.id">
-        <div class="entity-main">
-          <strong>{{ tenant.fullName }}</strong>
-          <span>{{ tenant.phone }}{{ tenant.email ? ' · ' + tenant.email : '' }}</span>
-          <span>{{ tenant.profession || 'Profession non renseignée' }}</span>
-        </div>
-
-        <div class="tenant-money-cell">
-          <strong>{{ formatMoney(tenant.depositBalance) }}</strong>
-          <span>Solde caution</span>
-          <small>Reçue {{ formatMoney(tenant.depositPaidAmount) }}</small>
-        </div>
-
-        <div class="tenant-date-cell">
-          <strong>{{ formatDate(tenant.startDate) }}</strong>
-          <span>Entrée</span>
-        </div>
-
-        <div class="tenant-status-cell">
-          <em [class.locked]="!canDeleteTenant(tenant)">{{ attachedLabel(tenant) }}</em>
-        </div>
-
-        <div class="row-actions">
-          <button
-            class="icon-action edit"
-            type="button"
-            aria-label="Modifier le locataire"
-            title="Modifier"
-            (click)="openEditTenant(tenant)"
-          >
-            <app-lucide-icon name="pencil" />
-            <span>Modifier</span>
-          </button>
-          <button
-            class="icon-action delete"
-            type="button"
-            aria-label="Supprimer le locataire"
-            title="Supprimer"
-            [disabled]="!canDeleteTenant(tenant)"
-            (click)="deleteTenant(tenant)"
-          >
-            <app-lucide-icon name="trash-2" />
-            <span>Supprimer</span>
-          </button>
-        </div>
-      </article>
-    } @empty {
-      <div class="empty-state">
-        Aucun locataire ne correspond à ces critères.
-        <button
-          class="icon-action add"
-          type="button"
-          aria-label="Créer le premier locataire"
-          title="Créer le premier locataire"
-          (click)="openCreateTenant()"
-        >
-          <app-lucide-icon name="user-plus" />
-          <span>Créer le premier locataire</span>
-        </button>
-      </div>
-    }
-    </div>
+  <div class="table-wrap tenant-table-wrap">
+    <table class="tenant-registry-table">
+      <thead>
+        <tr>
+          <th scope="col">Locataire</th>
+          <th scope="col">Contact</th>
+          <th scope="col">Caution</th>
+          <th scope="col">Entrée</th>
+          <th scope="col">Statut</th>
+          <th scope="col" class="actions-heading">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (tenant of paginatedTenants(); track tenant.id) {
+          <tr [class.selected]="selectedTenantId() === tenant.id">
+            <td data-label="Locataire">
+              <strong>{{ tenant.fullName }}</strong>
+              <small>{{ tenant.profession || 'Profession non renseignée' }}</small>
+            </td>
+            <td data-label="Contact">
+              <span>{{ tenant.phone }}</span>
+              <small>{{ tenant.email || 'Email non renseigné' }}</small>
+            </td>
+            <td data-label="Caution">
+              <strong>{{ formatMoney(tenant.depositBalance) }}</strong>
+              <small>Reçue {{ formatMoney(tenant.depositPaidAmount) }}</small>
+            </td>
+            <td data-label="Entrée">
+              <strong>{{ formatDate(tenant.startDate) }}</strong>
+            </td>
+            <td data-label="Statut">
+              <span class="tenant-status" [class.attached]="!canDeleteTenant(tenant)">
+                {{ attachedLabel(tenant) }}
+              </span>
+            </td>
+            <td data-label="Actions" class="tenant-actions-cell">
+              <div class="table-actions">
+                <button
+                  class="icon-action edit"
+                  type="button"
+                  aria-label="Modifier le locataire"
+                  title="Modifier"
+                  (click)="openEditTenant(tenant)"
+                >
+                  <app-lucide-icon name="pencil" />
+                  <span>Modifier</span>
+                </button>
+                <button
+                  class="icon-action delete"
+                  type="button"
+                  aria-label="Supprimer le locataire"
+                  [title]="canDeleteTenant(tenant) ? 'Supprimer' : 'Suppression impossible : locataire rattaché'"
+                  [disabled]="!canDeleteTenant(tenant)"
+                  (click)="deleteTenant(tenant)"
+                >
+                  <app-lucide-icon name="trash-2" />
+                  <span>Supprimer</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                Aucun locataire ne correspond à ces critères.
+                <button
+                  class="icon-action add"
+                  type="button"
+                  aria-label="Créer le premier locataire"
+                  title="Créer le premier locataire"
+                  (click)="openCreateTenant()"
+                >
+                  <app-lucide-icon name="user-plus" />
+                  <span>Créer le premier locataire</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
 
   <footer class="tenant-pagination" aria-label="Pagination des locataires">

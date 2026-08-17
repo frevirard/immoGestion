@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ImmoStore } from '../../immo-store';
 import { ExpenseCategory, PropertyExpense, PropertyUnit, RentHistoryPoint } from '../../models';
+import { LucideIconComponent } from '../lucide-icon.component';
 
 type DashboardTab = 'table' | 'charts' | 'expenses';
 
@@ -79,10 +80,18 @@ interface ExpenseChartItem {
   count: number;
 }
 
+interface FinancialRatioItem {
+  key: 'collected' | 'remaining' | 'expenses';
+  label: string;
+  amount: number;
+  percent: number;
+}
+
 const DASHBOARD_PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-dashboard',
+  imports: [LucideIconComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -94,6 +103,7 @@ export class DashboardComponent {
   readonly endDate = signal(todayDate());
   readonly tablePage = signal(1);
   readonly selectedManagerId = signal<string | null>(null);
+  readonly isPeriodFilterOpen = signal(false);
 
   readonly globalStats = computed<DashboardStats>(() => {
     const properties = this.store.visibleProperties();
@@ -268,6 +278,51 @@ export class DashboardComponent {
     };
   });
 
+  readonly financialRatio = computed<FinancialRatioItem[]>(() => {
+    const stats = this.periodStats();
+    const values = [
+      {
+        key: 'collected' as const,
+        label: 'Loyers perçus',
+        amount: Math.max(stats.collectedAmount, 0),
+      },
+      {
+        key: 'remaining' as const,
+        label: 'Reste à encaisser',
+        amount: Math.max(stats.remainingAmount, 0),
+      },
+      {
+        key: 'expenses' as const,
+        label: 'Dépenses',
+        amount: Math.max(this.expenseStats().amount, 0),
+      },
+    ];
+    const total = values.reduce((sum, item) => sum + item.amount, 0);
+
+    return values.map((item) => ({
+      ...item,
+      percent: total > 0 ? Math.round((item.amount / total) * 100) : 0,
+    }));
+  });
+
+  readonly financialDonutGradient = computed(() => {
+    const items = this.financialRatio();
+    const total = items.reduce((sum, item) => sum + item.amount, 0);
+
+    if (total <= 0) {
+      return 'conic-gradient(var(--gray-200) 0 100%)';
+    }
+
+    const collectedEnd = (items[0].amount / total) * 100;
+    const remainingEnd = collectedEnd + (items[1].amount / total) * 100;
+
+    return `conic-gradient(
+      var(--emerald-500) 0 ${collectedEnd}%,
+      var(--rose-500) ${collectedEnd}% ${remainingEnd}%,
+      var(--amber-500) ${remainingEnd}% 100%
+    )`;
+  });
+
   readonly selectedManagerDetail = computed<DashboardManagerDetail | null>(() => {
     const managerId = this.selectedManagerId();
 
@@ -386,6 +441,10 @@ export class DashboardComponent {
     this.activeTab.set(tab);
   }
 
+  togglePeriodFilter(): void {
+    this.isPeriodFilterOpen.update((isOpen) => !isOpen);
+  }
+
   setStartDate(event: Event): void {
     this.startDate.set((event.target as HTMLInputElement).value);
     this.resetTablePage();
@@ -400,6 +459,7 @@ export class DashboardComponent {
     this.startDate.set(startOfYearDate());
     this.endDate.set(todayDate());
     this.resetTablePage();
+    this.isPeriodFilterOpen.set(false);
   }
 
   previousPage(): void {

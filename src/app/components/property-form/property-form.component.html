@@ -6,7 +6,7 @@
       <p>Garde la liste visible et ouvre une fiche uniquement au moment de saisir.</p>
     </div>
     <div class="section-actions">
-      <span>{{ store.properties().length }} bien(s)</span>
+      <span>{{ filteredProperties().length }} / {{ store.properties().length }} bien(s)</span>
       <button
         class="icon-action add"
         type="button"
@@ -20,65 +20,179 @@
     </div>
   </div>
 
-  <div class="list-stack">
-    @for (property of store.properties(); track property.id) {
-      <article class="entity-row property-management-row" [class.selected]="selectedPropertyId() === property.id">
-        <div class="entity-main">
-          <strong>{{ property.reference }} · {{ property.category }}</strong>
-          <span>
-            {{ property.district }} · {{ formatMoney(property.rent) }} ·
-            {{ store.propertyComposition(property) }}
-          </span>
-          <span>
-            {{ store.getManagerName(property.managerId) }} ·
-            {{ store.getOwnerName(property.ownerId) }} ·
-            {{ propertyStatusLabel(property) }}
-          </span>
-        </div>
+  <div class="property-registry-toolbar" aria-label="Filtres des biens">
+    <label class="property-search">
+      <span>Recherche rapide</span>
+      <div>
+        <app-lucide-icon name="search" />
+        <input
+          type="search"
+          [value]="propertySearch()"
+          placeholder="Référence, quartier, gérant, locataire..."
+          (input)="setPropertySearch($event)"
+        />
+      </div>
+    </label>
 
-        <div class="row-actions">
-          <em [class.locked]="!canDeleteProperty(property)">
-            {{ deleteStatusLabel(property) }}
-          </em>
-          <button
-            class="icon-action edit"
-            type="button"
-            aria-label="Modifier le bien"
-            title="Modifier"
-            (click)="openEditProperty(property)"
-          >
-            <app-lucide-icon name="pencil" />
-            <span>Modifier</span>
-          </button>
-          <button
-            class="icon-action delete"
-            type="button"
-            aria-label="Supprimer le bien"
-            title="Supprimer"
-            [disabled]="!canDeleteProperty(property)"
-            (click)="deleteProperty(property)"
-          >
-            <app-lucide-icon name="trash-2" />
-            <span>Supprimer</span>
-          </button>
-        </div>
-      </article>
-    } @empty {
-      <div class="empty-state">
-        Aucun bien enregistré.
+    <div class="property-filter">
+      <span>Occupation</span>
+      <div class="chip-row">
+        <button type="button" [class.active]="propertyFilter() === 'ALL'" (click)="setPropertyFilter('ALL')">
+          Tous
+        </button>
         <button
-          class="icon-action add"
           type="button"
-          aria-label="Créer le premier bien"
-          title="Créer le premier bien"
-          (click)="openCreateProperty()"
+          [class.active]="propertyFilter() === 'OCCUPIED'"
+          (click)="setPropertyFilter('OCCUPIED')"
         >
-          <app-lucide-icon name="plus-circle" />
-          <span>Créer le premier bien</span>
+          Loués
+        </button>
+        <button type="button" [class.active]="propertyFilter() === 'FREE'" (click)="setPropertyFilter('FREE')">
+          Libres
+        </button>
+      </div>
+    </div>
+
+    <button class="ghost-button" type="button" (click)="resetPropertyFilters()">Effacer</button>
+  </div>
+
+  <div class="table-wrap property-table-wrap">
+    <table class="property-registry-table">
+      <thead>
+        <tr>
+          <th scope="col">Bien</th>
+          <th scope="col">Localisation</th>
+          <th scope="col">Composition</th>
+          <th scope="col">Affectations</th>
+          <th scope="col">Loyer</th>
+          <th scope="col">Statut</th>
+          <th scope="col" class="actions-heading">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (property of paginatedProperties(); track property.id) {
+          <tr [class.selected]="selectedPropertyId() === property.id">
+            <td data-label="Bien">
+              <strong>{{ property.reference }}</strong>
+              <small>{{ property.category }}</small>
+            </td>
+            <td data-label="Localisation">
+              <strong>{{ property.district || 'Quartier non renseigné' }}</strong>
+              <small>{{ property.address }}</small>
+            </td>
+            <td data-label="Composition">
+              <span class="composition-text">{{ store.propertyComposition(property) }}</span>
+            </td>
+            <td data-label="Affectations">
+              <span class="assignment-line">
+                <small>Gérant</small>
+                {{ store.getManagerName(property.managerId) }}
+              </span>
+              <span class="assignment-line">
+                <small>Locataire</small>
+                {{ store.getTenantName(property.tenantId) }}
+              </span>
+            </td>
+            <td data-label="Loyer">
+              <strong>{{ formatMoney(property.rent) }}</strong>
+              @if (property.charges > 0) {
+                <small>+ {{ formatMoney(property.charges) }} charges</small>
+              }
+            </td>
+            <td data-label="Statut">
+              <span class="property-status" [class.free]="!property.tenantId">
+                {{ propertyStatusLabel(property) }}
+              </span>
+              @if (!canDeleteProperty(property)) {
+                <small>{{ deleteStatusLabel(property) }}</small>
+              }
+            </td>
+            <td data-label="Actions" class="property-actions-cell">
+              <div class="table-actions">
+                <button
+                  class="icon-action edit"
+                  type="button"
+                  aria-label="Modifier le bien"
+                  title="Modifier"
+                  (click)="openEditProperty(property)"
+                >
+                  <app-lucide-icon name="pencil" />
+                  <span>Modifier</span>
+                </button>
+                <button
+                  class="icon-action delete"
+                  type="button"
+                  aria-label="Supprimer le bien"
+                  title="Supprimer"
+                  [disabled]="!canDeleteProperty(property)"
+                  (click)="deleteProperty(property)"
+                >
+                  <app-lucide-icon name="trash-2" />
+                  <span>Supprimer</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                Aucun bien ne correspond à ces critères.
+                <button
+                  class="icon-action add"
+                  type="button"
+                  aria-label="Créer le premier bien"
+                  title="Créer le premier bien"
+                  (click)="openCreateProperty()"
+                >
+                  <app-lucide-icon name="plus-circle" />
+                  <span>Créer un bien</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="register-pagination" aria-label="Pagination des biens">
+    <span>
+      Page {{ currentPropertyPage() }} / {{ totalPropertyPages() }} ·
+      {{ filteredProperties().length }} bien(s)
+    </span>
+
+    @if (totalPropertyPages() > 1) {
+      <div>
+        <button
+          class="ghost-button"
+          type="button"
+          [disabled]="currentPropertyPage() === 1"
+          (click)="previousPropertyPage()"
+        >
+          Précédent
+        </button>
+        @for (page of visiblePropertyPages(); track page) {
+          <button
+            class="ghost-button page-button"
+            type="button"
+            [class.active]="currentPropertyPage() === page"
+            (click)="goToPropertyPage(page)"
+          >
+            {{ page }}
+          </button>
+        }
+        <button
+          class="ghost-button"
+          type="button"
+          [disabled]="currentPropertyPage() === totalPropertyPages()"
+          (click)="nextPropertyPage()"
+        >
+          Suivant
         </button>
       </div>
     }
-  </div>
+  </footer>
 </section>
 
 @if (isPropertyModalOpen()) {

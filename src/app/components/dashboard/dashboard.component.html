@@ -40,9 +40,25 @@
       <h2>Loyers à récupérer par agent</h2>
       <p>{{ periodLabel() }}</p>
     </div>
+    <button
+      class="secondary-button period-toggle"
+      type="button"
+      aria-controls="dashboard-period-filter"
+      [attr.aria-expanded]="isPeriodFilterOpen()"
+      [class.active]="isPeriodFilterOpen()"
+      (click)="togglePeriodFilter()"
+    >
+      <app-lucide-icon name="sliders-horizontal" />
+      <span>Modifier la période</span>
+    </button>
   </div>
 
-  <div class="period-filter" aria-label="Filtrer les loyers par période">
+  <div
+    id="dashboard-period-filter"
+    class="period-filter"
+    [class.mobile-open]="isPeriodFilterOpen()"
+    aria-label="Filtrer les loyers par période"
+  >
     <label>
       Date de début
       <input type="date" [value]="startDate()" (input)="setStartDate($event)" />
@@ -86,7 +102,7 @@
 
   @if (activeTab() === 'table') {
     <div class="dashboard-tab-panel">
-      <div class="table-wrap">
+      <div class="table-wrap dashboard-main-table-wrap">
         <table class="dashboard-table">
           <thead>
             <tr>
@@ -111,17 +127,17 @@
                 (keydown.enter)="selectManager(summary.managerId)"
                 (keydown.space)="selectManager(summary.managerId); $event.preventDefault()"
               >
-                <td>{{ summary.managerName }}</td>
-                <td>{{ summary.occupiedCount }}</td>
-                <td>{{ formatMoney(summary.expectedAmount) }}</td>
-                <td>{{ formatMoney(summary.collectedAmount) }}</td>
-                <td>{{ formatMoney(summary.deductedFromDeposit) }}</td>
-                <td>
+                <td data-label="Agent">{{ summary.managerName }}</td>
+                <td data-label="Biens loués">{{ summary.occupiedCount }}</td>
+                <td data-label="Attendu">{{ formatMoney(summary.expectedAmount) }}</td>
+                <td data-label="Encaissé">{{ formatMoney(summary.collectedAmount) }}</td>
+                <td data-label="Déduit caution">{{ formatMoney(summary.deductedFromDeposit) }}</td>
+                <td data-label="Impayés">
                   <span class="unpaid-badge" [class.clear]="summary.unpaidRentCount === 0">
                     {{ summary.unpaidRentCount }}
                   </span>
                 </td>
-                <td><strong>{{ formatMoney(summary.remainingAmount) }}</strong></td>
+                <td data-label="Reste"><strong>{{ formatMoney(summary.remainingAmount) }}</strong></td>
               </tr>
             } @empty {
               <tr>
@@ -306,6 +322,47 @@
     </div>
   } @else if (activeTab() === 'charts') {
     <div class="dashboard-tab-panel chart-grid">
+      <article class="chart-card financial-ratio-card">
+        <div class="chart-head">
+          <div>
+            <span>Équilibre financier</span>
+            <h3>Loyers et dépenses</h3>
+          </div>
+          <small>{{ periodLabel() }}</small>
+        </div>
+
+        <div class="financial-ratio-layout">
+          <div
+            class="financial-donut"
+            role="img"
+            aria-label="Camembert des loyers perçus, du reste à encaisser et des dépenses"
+            [style.background]="financialDonutGradient()"
+          >
+            <div>
+              <span>Flux suivis</span>
+              <strong>{{ formatMoney(periodStats().collectedAmount + periodStats().remainingAmount + expenseStats().amount) }}</strong>
+            </div>
+          </div>
+
+          <dl class="financial-ratio-legend">
+            @for (item of financialRatio(); track item.key) {
+              <div
+                class="financial-ratio-item"
+                [class.collected-ratio]="item.key === 'collected'"
+                [class.remaining-ratio]="item.key === 'remaining'"
+                [class.expense-ratio]="item.key === 'expenses'"
+              >
+                <dt><i></i>{{ item.label }}</dt>
+                <dd>
+                  <strong>{{ formatMoney(item.amount) }}</strong>
+                  <span>{{ item.percent }}%</span>
+                </dd>
+              </div>
+            }
+          </dl>
+        </div>
+      </article>
+
       <article class="chart-card recovery-card">
         <div class="chart-head">
           <div>
@@ -342,7 +399,7 @@
         </div>
       </article>
 
-      <article class="chart-card">
+      <article class="chart-card agent-recovery-card">
         <div class="chart-head">
           <div>
             <span>Agents</span>

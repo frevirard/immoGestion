@@ -97,6 +97,10 @@
   min-height: 38px;
 }
 
+.expense-filter-toggle {
+  display: none;
+}
+
 .expense-filters {
   display: grid;
   grid-template-columns: minmax(210px, 1.25fr) repeat(2, minmax(150px, 0.72fr)) repeat(2, minmax(130px, 0.55fr)) auto;
@@ -206,6 +210,13 @@
 
 .expense-cards {
   display: none;
+}
+
+.expense-card-attachment,
+.expense-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .expense-modal {
@@ -346,36 +357,199 @@
   }
 
   .expense-cards footer {
-    justify-content: flex-end;
+    justify-content: space-between;
     border-top: 1px solid var(--gray-100);
     padding-top: 0.55rem;
   }
 }
 
 @media (max-width: 560px) {
-  .expense-kpis,
-  .expense-filters {
-    grid-template-columns: 1fr;
+  .expenses-page {
+    gap: 0.6rem;
   }
 
-  .expense-search {
-    grid-column: auto;
+  .expense-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .expense-kpis article {
+    min-height: 68px;
+    align-content: center;
+    gap: 0.08rem;
+    border-left-width: 3px;
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.65rem;
+  }
+
+  .expense-kpis span {
+    font-size: 0.62rem;
+  }
+
+  .expense-kpis strong {
+    font-size: 0.9rem;
+  }
+
+  .expense-register {
+    padding: 0.65rem;
+  }
+
+  .expense-toolbar {
+    position: static;
+    gap: 0.55rem;
+    padding: 0 0 0.65rem;
   }
 
   .expense-intro {
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 42px auto;
+    align-items: center;
+    gap: 0.45rem;
   }
 
-  .expense-intro .primary-button {
+  .expense-intro > div {
+    min-width: 0;
+  }
+
+  .expense-intro h2 {
+    overflow: hidden;
+    margin: 0;
+    font-size: 1.03rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expense-intro p,
+  .expense-icon {
+    display: none;
+  }
+
+  .expense-intro .expense-add-button {
+    grid-column: auto;
+    display: grid;
+    width: 42px;
+    min-height: 42px;
+    place-items: center;
+    border-radius: 13px;
+    padding: 0;
+  }
+
+  .expense-add-button > span {
+    display: none;
+  }
+
+  .expense-filter-toggle {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: var(--radius-pill);
+    padding: 0.45rem 0.7rem;
+    font-size: 0.74rem;
+  }
+
+  .expense-filter-toggle app-lucide-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .expense-filter-toggle em {
+    display: grid;
+    min-width: 19px;
+    height: 19px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--white);
+    background: var(--brand-600);
+    font-size: 0.64rem;
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  .expense-filter-toggle.active {
+    border-color: var(--brand-300);
+    color: var(--brand-700);
+    background: var(--brand-50);
+  }
+
+  .expense-filters {
+    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+    border: 1px solid var(--border);
+    padding: 0.55rem;
+  }
+
+  .expense-filters.mobile-open {
+    display: grid;
+    animation: ui-enter 0.2s var(--ease) both;
+  }
+
+  .expense-search {
     grid-column: 1 / -1;
+  }
+
+  .expense-filters > .ghost-button {
+    grid-column: 1 / -1;
+    min-height: 36px;
+  }
+
+  .expense-filters :is(input, select) {
+    min-height: 36px;
+    padding-inline: 0.65rem;
+    font-size: 0.76rem;
+  }
+
+  .expense-filters label,
+  .expense-search > span {
+    font-size: 0.59rem;
+  }
+
+  .expense-cards {
+    gap: 0.5rem;
+    padding-top: 0.55rem;
+  }
+
+  .expense-cards article {
+    gap: 0.35rem;
+    padding: 0.65rem;
+  }
+
+  .expense-cards footer {
+    display: flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .expense-card-attachment {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .expense-card-attachment .secondary-button {
+    min-width: 0;
+    min-height: 38px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  .expense-card-actions {
+    flex: 0 0 auto;
+    gap: 0.35rem;
+  }
+
+  .expense-card-actions .icon-action {
+    width: 38px;
+    height: 38px;
   }
 
   .expense-modal .form-grid {
     grid-template-columns: 1fr;
   }
 
-  .selected-attachment,
-  .expense-cards footer {
+  .selected-attachment {
     align-items: stretch;
     flex-direction: column;
   }

@@ -47,6 +47,7 @@ export class ExpensesPageComponent {
   readonly propertyFilter = signal('ALL');
   readonly startDate = signal('');
   readonly endDate = signal('');
+  readonly isMobileFiltersOpen = signal(false);
   readonly page = signal(1);
   readonly isModalOpen = signal(false);
   readonly editingExpense = signal<PropertyExpense | null>(null);
@@ -109,6 +110,14 @@ export class ExpensesPageComponent {
     };
   });
 
+  readonly activeFilterCount = computed(() =>
+    Number(Boolean(this.search().trim())) +
+    Number(this.categoryFilter() !== 'ALL') +
+    Number(this.propertyFilter() !== 'ALL') +
+    Number(Boolean(this.startDate())) +
+    Number(Boolean(this.endDate())),
+  );
+
   readonly pageCount = computed(() =>
     Math.max(1, Math.ceil(this.filteredExpenses().length / PAGE_SIZE)),
   );
@@ -157,6 +166,11 @@ export class ExpensesPageComponent {
     this.startDate.set('');
     this.endDate.set('');
     this.page.set(1);
+    this.isMobileFiltersOpen.set(false);
+  }
+
+  toggleMobileFilters(): void {
+    this.isMobileFiltersOpen.update((isOpen) => !isOpen);
   }
 
   openCreate(): void {

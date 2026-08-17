@@ -109,83 +109,55 @@
   min-height: 38px;
 }
 
-.tenant-list-shell {
-  overflow: clip;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--white);
+.tenant-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
-.tenant-list-head,
-.tenant-management-row {
-  display: grid;
-  grid-template-columns: minmax(240px, 1.25fr) minmax(160px, 0.72fr) minmax(115px, 0.5fr) minmax(105px, 0.45fr) minmax(110px, auto);
-  align-items: center;
-  gap: 0.7rem;
+.tenant-registry-table {
+  min-width: 900px;
+  table-layout: fixed;
 }
 
-.tenant-list-head {
-  position: sticky;
-  top: var(--header-height);
-  z-index: 4;
-  border-bottom: 1px solid var(--border);
-  color: var(--gray-500);
-  background: var(--gray-50);
-  box-shadow: 0 1px 0 var(--border);
-  padding: 0.6rem 0.8rem;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+.tenant-registry-table th:nth-child(1) { width: 19%; }
+.tenant-registry-table th:nth-child(2) { width: 22%; }
+.tenant-registry-table th:nth-child(3) { width: 17%; }
+.tenant-registry-table th:nth-child(4) { width: 15%; }
+.tenant-registry-table th:nth-child(5) { width: 14%; }
+.tenant-registry-table th:nth-child(6) { width: 13%; }
 
-.tenant-list {
-  max-height: none;
-  overflow: visible;
-}
-
-.tenant-management-row {
-  min-width: 0;
-  padding: 0.72rem 0.8rem;
-}
-
-.tenant-management-row:last-child {
-  border-bottom: 0;
-}
-
-.tenant-management-row .entity-main,
-.tenant-money-cell,
-.tenant-date-cell,
-.tenant-status-cell {
-  display: grid;
-  min-width: 0;
-  gap: 0.1rem;
-}
-
-.tenant-management-row .entity-main strong,
-.tenant-money-cell strong,
-.tenant-date-cell strong {
+.tenant-registry-table td {
   overflow: hidden;
+  white-space: normal;
+}
+
+.tenant-registry-table td > strong,
+.tenant-registry-table td > span:not(.tenant-status),
+.tenant-registry-table td > small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tenant-registry-table td > strong {
   color: var(--gray-900);
-  font-size: 0.83rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.tenant-management-row .entity-main span,
-.tenant-money-cell span,
-.tenant-money-cell small,
-.tenant-date-cell span {
-  overflow: hidden;
+.tenant-registry-table td > span:not(.tenant-status) {
+  color: var(--gray-700);
+  font-size: 0.76rem;
+}
+
+.tenant-registry-table td > small {
   color: var(--gray-500);
-  font-size: 0.7rem;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.68rem;
+  line-height: 1.35;
 }
 
-.tenant-status-cell em {
+.tenant-status {
   display: inline-flex;
   width: fit-content;
   border-radius: var(--radius-pill);
@@ -199,13 +171,42 @@
   text-transform: uppercase;
 }
 
-.tenant-status-cell em.locked {
+.tenant-status.attached {
   color: var(--warning);
   background: var(--warning-soft);
 }
 
-.tenant-management-row .row-actions {
-  flex-wrap: nowrap;
+.tenant-registry-table tr.selected {
+  background: var(--brand-50);
+}
+
+.actions-heading,
+.tenant-actions-cell {
+  text-align: right;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.table-actions .icon-action,
+.table-actions .icon-action:hover,
+.table-actions .icon-action:focus-visible {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.table-actions .icon-action > span,
+.table-actions .icon-action:hover > span,
+.table-actions .icon-action:focus-visible > span {
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
 }
 
 .tenant-pagination {
@@ -216,47 +217,10 @@
   width: min(780px, 100%);
 }
 
-@media (max-width: 1060px) {
-  .tenant-list-head,
-  .tenant-management-row {
-    grid-template-columns: minmax(220px, 1.2fr) minmax(145px, 0.7fr) minmax(100px, 0.45fr) minmax(105px, 0.45fr) auto;
-  }
-}
-
 @media (max-width: 860px) {
   .tenant-toolbar {
     grid-template-columns: 1fr;
   }
-
-  .tenant-list-head {
-    display: none;
-  }
-
-  .tenant-list {
-    max-height: none;
-    overflow: visible;
-    background: var(--gray-50);
-    padding: 0.55rem;
-  }
-
-  .tenant-management-row {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "main status"
-      "money actions"
-      "date actions";
-    align-items: start;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--white);
-    margin-bottom: 0.5rem;
-  }
-
-  .tenant-management-row .entity-main { grid-area: main; }
-  .tenant-money-cell { grid-area: money; }
-  .tenant-date-cell { grid-area: date; }
-  .tenant-status-cell { grid-area: status; justify-items: end; }
-  .tenant-management-row .row-actions { grid-area: actions; align-content: start; }
 }
 
 @media (max-width: 620px) {
@@ -278,21 +242,84 @@
     padding-inline: 0.35rem;
   }
 
-  .tenant-management-row {
-    grid-template-columns: 1fr;
+  .tenant-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .tenant-registry-table,
+  .tenant-registry-table tbody,
+  .tenant-registry-table tr,
+  .tenant-registry-table td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tenant-registry-table {
+    min-width: 0;
+  }
+
+  .tenant-registry-table thead {
+    display: none;
+  }
+
+  .tenant-registry-table tbody {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .tenant-registry-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "main"
-      "status"
-      "money"
-      "date"
-      "actions";
+      "identity status"
+      "contact contact"
+      "deposit date"
+      "actions actions";
+    align-items: start;
+    gap: 0.55rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    box-shadow: var(--shadow-xs);
+    padding: 0.75rem;
   }
 
-  .tenant-status-cell {
-    justify-items: start;
+  .tenant-registry-table td {
+    border: 0;
+    padding: 0;
   }
 
-  .tenant-management-row .row-actions {
-    justify-content: flex-start;
+  .tenant-registry-table td:nth-child(1) { grid-area: identity; }
+  .tenant-registry-table td:nth-child(2) { grid-area: contact; }
+  .tenant-registry-table td:nth-child(3) { grid-area: deposit; }
+  .tenant-registry-table td:nth-child(4) { grid-area: date; text-align: right; }
+  .tenant-registry-table td:nth-child(5) { grid-area: status; text-align: right; }
+  .tenant-registry-table td:nth-child(6) { grid-area: actions; }
+
+  .tenant-registry-table td:nth-child(2) {
+    border-bottom: 1px solid var(--gray-100);
+    padding-bottom: 0.5rem;
+  }
+
+  .tenant-actions-cell {
+    border-top: 1px solid var(--gray-100) !important;
+    padding-top: 0.5rem !important;
+    text-align: right;
+  }
+
+  .tenant-actions-cell::before {
+    content: "Actions";
+    float: left;
+    color: var(--gray-500);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 36px;
+    text-transform: uppercase;
   }
 }

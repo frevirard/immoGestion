@@ -28,13 +28,39 @@
           <h2>Suivi des dépenses</h2>
           <p>Dépenses par bien, gérant, catégorie et période.</p>
         </div>
-        <button class="primary-button" type="button" [disabled]="!store.visibleProperties().length" (click)="openCreate()">
+        <button
+          class="primary-button expense-add-button"
+          type="button"
+          aria-label="Ajouter une dépense"
+          title="Ajouter une dépense"
+          [disabled]="!store.visibleProperties().length"
+          (click)="openCreate()"
+        >
           <app-lucide-icon name="plus" />
-          Ajouter une dépense
+          <span>Ajouter une dépense</span>
+        </button>
+        <button
+          class="secondary-button expense-filter-toggle"
+          type="button"
+          aria-controls="expense-mobile-filters"
+          [attr.aria-expanded]="isMobileFiltersOpen()"
+          [class.active]="isMobileFiltersOpen() || activeFilterCount() > 0"
+          (click)="toggleMobileFilters()"
+        >
+          <app-lucide-icon name="sliders-horizontal" />
+          <span>Filtres</span>
+          @if (activeFilterCount() > 0) {
+            <em>{{ activeFilterCount() }}</em>
+          }
         </button>
       </div>
 
-      <div class="expense-filters" aria-label="Filtres des dépenses">
+      <div
+        id="expense-mobile-filters"
+        class="expense-filters"
+        [class.mobile-open]="isMobileFiltersOpen()"
+        aria-label="Filtres des dépenses"
+      >
         <label class="expense-search">
           <span>Recherche</span>
           <div>
@@ -155,17 +181,31 @@
           <p>{{ categoryLabel(expense.category) }} · {{ expense.managerName }}</p>
           @if (expense.comment) { <small>{{ expense.comment }}</small> }
           <footer>
-            @if (expense.attachmentSize > 0) {
-              <button class="secondary-button" type="button" (click)="downloadAttachment(expense)">
-                <app-lucide-icon name="download" /> Justificatif
+            <div class="expense-card-attachment">
+              @if (expense.attachmentSize > 0) {
+                <button
+                  class="secondary-button"
+                  type="button"
+                  [disabled]="loadingAttachmentId() === expense.id"
+                  (click)="downloadAttachment(expense)"
+                >
+                  @if (loadingAttachmentId() === expense.id) {
+                    <span class="button-loader" aria-hidden="true"></span>
+                  } @else {
+                    <app-lucide-icon name="download" />
+                  }
+                  Justificatif
+                </button>
+              }
+            </div>
+            <div class="expense-card-actions">
+              <button class="icon-action edit" type="button" title="Modifier" (click)="openEdit(expense)">
+                <app-lucide-icon name="pencil" /><span>Modifier</span>
               </button>
-            }
-            <button class="icon-action edit" type="button" title="Modifier" (click)="openEdit(expense)">
-              <app-lucide-icon name="pencil" /><span>Modifier</span>
-            </button>
-            <button class="icon-action delete" type="button" title="Supprimer" (click)="requestDelete(expense)">
-              <app-lucide-icon name="trash-2" /><span>Supprimer</span>
-            </button>
+              <button class="icon-action delete" type="button" title="Supprimer" (click)="requestDelete(expense)">
+                <app-lucide-icon name="trash-2" /><span>Supprimer</span>
+              </button>
+            </div>
           </footer>
         </article>
       }

@@ -1,3 +1,326 @@
 :host {
   display: block;
+  min-width: 0;
+}
+
+.property-crud-page {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.property-crud-page .section-heading h2 {
+  margin-bottom: 0.15rem;
+}
+
+.property-crud-page .section-heading p:last-child {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.property-registry-toolbar {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
+  align-items: end;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--gray-50);
+  padding: 0.65rem;
+}
+
+.property-search,
+.property-filter {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  color: var(--gray-500);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.property-search > div {
+  position: relative;
+}
+
+.property-search app-lucide-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  color: var(--gray-400);
+  transform: translateY(-50%);
+}
+
+.property-search input {
+  min-height: 38px;
+  border-radius: var(--radius-pill);
+  padding-left: 2.2rem;
+  text-transform: none;
+}
+
+.property-filter .chip-row {
+  flex-wrap: nowrap;
+}
+
+.property-filter .chip-row button,
+.property-registry-toolbar > .ghost-button {
+  min-height: 38px;
+}
+
+.property-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.property-registry-table {
+  min-width: 1040px;
+  table-layout: fixed;
+}
+
+.property-registry-table th:nth-child(1) { width: 12%; }
+.property-registry-table th:nth-child(2) { width: 16%; }
+.property-registry-table th:nth-child(3) { width: 19%; }
+.property-registry-table th:nth-child(4) { width: 19%; }
+.property-registry-table th:nth-child(5) { width: 13%; }
+.property-registry-table th:nth-child(6) { width: 11%; }
+.property-registry-table th:nth-child(7) { width: 10%; }
+
+.property-registry-table td {
+  overflow: hidden;
+  white-space: normal;
+}
+
+.property-registry-table td > strong,
+.property-registry-table td > small,
+.property-registry-table td > span:not(.property-status) {
+  display: block;
+}
+
+.property-registry-table td > strong {
+  overflow: hidden;
+  color: var(--gray-900);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.property-registry-table td > small,
+.assignment-line small {
+  overflow: hidden;
+  color: var(--gray-500);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composition-text {
+  display: -webkit-box !important;
+  overflow: hidden;
+  color: var(--gray-600);
+  font-size: 0.73rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.assignment-line {
+  overflow: hidden;
+  color: var(--gray-700);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assignment-line + .assignment-line {
+  margin-top: 0.2rem;
+}
+
+.assignment-line small {
+  display: inline;
+  margin-right: 0.3rem;
+}
+
+.property-status {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: var(--radius-pill);
+  color: var(--success);
+  background: var(--success-soft);
+  padding: 0.28rem 0.48rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.property-status.free {
+  color: var(--brand-700);
+  background: var(--brand-50);
+}
+
+.property-registry-table tr.selected {
+  background: var(--brand-50);
+}
+
+.actions-heading,
+.property-actions-cell {
+  text-align: right;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.table-actions .icon-action,
+.table-actions .icon-action:hover,
+.table-actions .icon-action:focus-visible {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.table-actions .icon-action > span,
+.table-actions .icon-action:hover > span,
+.table-actions .icon-action:focus-visible > span {
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+}
+
+.property-modal {
+  width: min(920px, 100%);
+}
+
+@media (max-width: 900px) {
+  .property-registry-toolbar {
+    grid-template-columns: 1fr auto;
+  }
+
+  .property-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-crud-page {
+    gap: 0.65rem;
+  }
+
+  .property-registry-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .property-filter .chip-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .property-registry-toolbar > .ghost-button {
+    width: 100%;
+  }
+
+  .property-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .property-registry-table,
+  .property-registry-table tbody,
+  .property-registry-table tr,
+  .property-registry-table td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .property-registry-table {
+    min-width: 0;
+  }
+
+  .property-registry-table thead {
+    display: none;
+  }
+
+  .property-registry-table tbody {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .property-registry-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "property status"
+      "location rent"
+      "composition composition"
+      "assignment actions";
+    align-items: start;
+    gap: 0.55rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    box-shadow: var(--shadow-xs);
+    padding: 0.75rem;
+  }
+
+  .property-registry-table td {
+    border: 0;
+    padding: 0;
+  }
+
+  .property-registry-table td:nth-child(1) { grid-area: property; }
+  .property-registry-table td:nth-child(2) { grid-area: location; }
+  .property-registry-table td:nth-child(3) { grid-area: composition; }
+  .property-registry-table td:nth-child(4) { grid-area: assignment; }
+  .property-registry-table td:nth-child(5) { grid-area: rent; text-align: right; }
+  .property-registry-table td:nth-child(6) { grid-area: status; text-align: right; }
+  .property-registry-table td:nth-child(7) { grid-area: actions; align-self: end; }
+
+  .property-registry-table td:nth-child(3) {
+    border-top: 1px solid var(--gray-100);
+    border-bottom: 1px solid var(--gray-100);
+    padding-block: 0.5rem;
+  }
+
+  .property-registry-table td:nth-child(6) > small {
+    display: none;
+  }
+
+  .property-actions-cell {
+    text-align: right;
+  }
+}
+
+@media (max-width: 440px) {
+  .property-crud-page .section-heading {
+    gap: 0.6rem;
+  }
+
+  .property-registry-table tbody tr {
+    grid-template-areas:
+      "property status"
+      "location rent"
+      "composition composition"
+      "assignment assignment"
+      "actions actions";
+  }
+
+  .property-actions-cell {
+    border-top: 1px solid var(--gray-100) !important;
+    padding-top: 0.5rem !important;
+  }
 }

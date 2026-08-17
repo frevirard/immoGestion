@@ -1,8 +1,12 @@
-import { Component, EventEmitter, inject, Output, signal } from '@angular/core';
+import { Component, computed, EventEmitter, inject, Output, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ImmoStore } from '../../immo-store';
 import { PropertyUnit } from '../../models';
 import { LucideIconComponent } from '../lucide-icon.component';
+
+type PropertyRegistryFilter = 'ALL' | 'OCCUPIED' | 'FREE';
+
+const PROPERTY_PAGE_SIZE = 8;
 
 @Component({
   selector: 'app-property-form',
@@ -15,6 +19,9 @@ export class PropertyFormComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   readonly selectedPropertyId = signal<string | null>(null);
   readonly isPropertyModalOpen = signal(false);
+  readonly propertySearch = signal('');
+  readonly propertyFilter = signal<PropertyRegistryFilter>('ALL');
+  readonly propertyPage = signal(1);
 
   @Output() readonly notice = new EventEmitter<string>();
 
@@ -37,6 +44,93 @@ export class PropertyFormComponent {
     tenantId: [''],
     notes: [''],
   });
+
+  readonly filteredProperties = computed(() => {
+    const query = this.normalize(this.propertySearch());
+
+    return this.store
+      .properties()
+      .filter((property) => {
+        if (this.propertyFilter() === 'OCCUPIED') {
+          return Boolean(property.tenantId);
+        }
+
+        if (this.propertyFilter() === 'FREE') {
+          return !property.tenantId;
+        }
+
+        return true;
+      })
+      .filter((property) => {
+        if (!query) {
+          return true;
+        }
+
+        return this.normalize(
+          [
+            property.reference,
+            property.category,
+            property.address,
+            property.district,
+            this.store.propertyComposition(property),
+            this.store.getManagerName(property.managerId),
+            this.store.getOwnerName(property.ownerId),
+            this.store.getTenantName(property.tenantId),
+          ].join(' '),
+        ).includes(query);
+      })
+      .sort((first, second) => first.reference.localeCompare(second.reference));
+  });
+
+  readonly totalPropertyPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredProperties().length / PROPERTY_PAGE_SIZE)),
+  );
+
+  readonly currentPropertyPage = computed(() =>
+    Math.min(Math.max(1, this.propertyPage()), this.totalPropertyPages()),
+  );
+
+  readonly paginatedProperties = computed(() => {
+    const start = (this.currentPropertyPage() - 1) * PROPERTY_PAGE_SIZE;
+    return this.filteredProperties().slice(start, start + PROPERTY_PAGE_SIZE);
+  });
+
+  readonly visiblePropertyPages = computed(() => {
+    const total = this.totalPropertyPages();
+    const current = this.currentPropertyPage();
+    const end = Math.min(total, Math.max(5, current + 2));
+    const start = Math.max(1, Math.min(current - 2, end - 4));
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  });
+
+  setPropertySearch(event: Event): void {
+    this.propertySearch.set((event.target as HTMLInputElement).value);
+    this.propertyPage.set(1);
+  }
+
+  setPropertyFilter(filter: PropertyRegistryFilter): void {
+    this.propertyFilter.set(filter);
+    this.propertyPage.set(1);
+  }
+
+  resetPropertyFilters(): void {
+    this.propertySearch.set('');
+    this.propertyFilter.set('ALL');
+    this.propertyPage.set(1);
+  }
+
+  previousPropertyPage(): void {
+    this.propertyPage.update((page) => Math.max(1, page - 1));
+  }
+
+  nextPropertyPage(): void {
+    this.propertyPage.update((page) => Math.min(this.totalPropertyPages(), page + 1));
+  }
+
+  goToPropertyPage(page: number): void {
+    this.propertyPage.set(Math.min(Math.max(1, page), this.totalPropertyPages()));
+  }
 
   async openCreateProperty(): Promise<void> {
     await this.store.refresh();
@@ -162,6 +256,14 @@ export class PropertyFormComponent {
     })
       .format(amount)
       .replace(/[\u00A0\u202F]/g, ' ');
+  }
+
+  private normalize(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .trim();
   }
 
   private resetForm(): void {
