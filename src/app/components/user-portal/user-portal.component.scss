@@ -866,10 +866,90 @@
 }
 
 .listing-detail-modal {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1fr);
   width: min(100%, 1080px);
   overflow: hidden;
+}
+
+.listing-detail-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  color: var(--gray-900);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 14px 30px -16px rgba(15, 23, 42, 0.7),
+    0 2px 8px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  animation: detail-close-in 0.32s var(--ease) both;
+  transition:
+    width 0.28s var(--ease),
+    color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
+}
+
+.listing-detail-close app-lucide-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.listing-detail-close span {
+  max-width: 0;
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-weight: 650;
+  opacity: 0;
+  white-space: nowrap;
+  transition: max-width 0.28s var(--ease), opacity 0.18s ease;
+}
+
+.listing-detail-close:hover,
+.listing-detail-close:focus-visible {
+  width: 104px;
+  color: var(--brand-700);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 18px 34px -16px rgba(15, 23, 42, 0.72),
+    0 0 0 4px rgba(70, 95, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.listing-detail-close:hover span,
+.listing-detail-close:focus-visible span {
+  max-width: 48px;
+  opacity: 1;
+}
+
+.listing-detail-close:active {
+  transform: scale(0.94);
+}
+
+@keyframes detail-close-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.86);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .detail-carousel {
@@ -1111,11 +1191,40 @@
   }
 
   .listing-detail-modal {
+    display: block;
     grid-template-columns: 1fr;
+    height: calc(100dvh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .listing-detail-close {
+    position: sticky;
+    top: max(12px, env(safe-area-inset-top));
+    right: auto;
+    width: 44px;
+    margin: 12px max(12px, env(safe-area-inset-right)) -56px auto;
+  }
+
+  .listing-detail-close:hover,
+  .listing-detail-close:focus-visible {
+    width: 44px;
+  }
+
+  .listing-detail-close span {
+    display: none;
   }
 
   .detail-carousel {
-    min-height: 360px;
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+    max-height: 52dvh;
+    touch-action: pan-y;
   }
 }
 
@@ -1286,6 +1395,20 @@
 
   .detail-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .listing-detail-modal {
+    max-height: calc(100dvh - 1rem);
+  }
+
+  .detail-carousel {
+    aspect-ratio: 4 / 3;
+    max-height: 48dvh;
+  }
+
+  .listing-detail-body {
+    gap: 14px;
+    padding: 18px;
   }
 }
 

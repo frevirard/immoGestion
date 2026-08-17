@@ -641,7 +641,8 @@ tbody tr:hover {
   z-index: 100;
   display: grid;
   place-items: center;
-  overflow: auto;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: rgba(15, 23, 42, 0.52);
   backdrop-filter: blur(4px);
   padding: 1rem;
@@ -651,12 +652,29 @@ tbody tr:hover {
 .modal-card {
   width: min(760px, 100%);
   max-height: calc(100dvh - 2rem);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   background: var(--white);
   box-shadow: var(--shadow-pop);
   padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+/* Les zones principales sont elles-mêmes scrollables : on les fige pendant
+   l’ouverture d’une modale pour éviter que le geste traverse l’arrière-plan. */
+body:has(.modal-backdrop) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body:has(.modal-backdrop) .workspace,
+body:has(.modal-backdrop) .sidebar,
+body:has(.modal-backdrop) .navbar-actions {
+  overflow: hidden;
 }
 
 .modal-head {
