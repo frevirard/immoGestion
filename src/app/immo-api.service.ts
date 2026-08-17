@@ -32,7 +32,8 @@ type PropertyInput = Omit<PropertyUnit, 'id' | 'createdAt' | 'tenantId'>;
 @Injectable({ providedIn: 'root' })
 export class ImmoApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080/api';
+  // private readonly baseUrl = 'http://localhost:8093/api';
+  private readonly baseUrl = 'https://www.togohabitat.com/api'
 
   getState() {
     return this.http.get<AppState>(`${this.baseUrl}/app-state`);

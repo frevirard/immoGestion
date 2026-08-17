@@ -1,9 +1,9 @@
 <div class="app-shell marketplace-shell" [class.menu-open]="isMenuOpen()">
   <header class="app-navbar">
     <div class="brand-mark">
-      <span>IP</span>
+      <span>TH</span>
       <div>
-        <strong>Immo Parc</strong>
+        <strong>Togo Habitat</strong>
         <small>Annonces immobilières</small>
       </div>
     </div>
@@ -760,7 +760,7 @@
         @if (selectedPhoto()) {
           <img [src]="selectedPhoto()" [alt]="listing.title" />
         } @else {
-          <div class="detail-carousel-placeholder">IP</div>
+          <div class="detail-carousel-placeholder">TH</div>
         }
 
         @if ((listing.photos?.length ?? 0) > 1) {

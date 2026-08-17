@@ -159,7 +159,7 @@ export class ImmoStore {
       await this.refreshExpensesForCurrentUser();
       this.apiError.set('');
     } catch {
-      this.apiError.set('Backend indisponible. Vérifie que Spring Boot tourne sur le port 8080.');
+      this.apiError.set('Serveur indisponible');
     } finally {
       this.endLoading();
       this.isInitialized.set(true);

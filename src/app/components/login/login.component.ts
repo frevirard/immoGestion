@@ -121,7 +121,7 @@ export class LoginComponent {
         : 0;
 
     if (status === 0) {
-      return 'Le backend ne répond pas. Démarre Spring Boot sur le port 8080 puis réessaie.';
+      return 'Serveur indisponible';
     }
 
     if (status === 409) {
