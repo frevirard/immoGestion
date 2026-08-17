@@ -7,6 +7,30 @@
   animation: login-card-in 0.55s var(--ease) both;
 }
 
+.login-card .brand-mark,
+.login-card > .eyebrow,
+.login-card > h1,
+.login-card > .lead,
+.auth-switch {
+  animation: login-item-in 0.5s var(--ease) both;
+}
+
+.login-card > .eyebrow {
+  animation-delay: 0.08s;
+}
+
+.login-card > h1 {
+  animation-delay: 0.14s;
+}
+
+.login-card > .lead {
+  animation-delay: 0.2s;
+}
+
+.auth-switch {
+  animation-delay: 0.26s;
+}
+
 .login-card::after {
   position: absolute;
   z-index: 3;
@@ -69,6 +93,18 @@
   }
 }
 
+@keyframes login-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes login-progress {
   0% {
     transform: translateX(-45%) scaleX(0.25);
@@ -86,5 +122,19 @@
 @keyframes auth-status-pulse {
   50% {
     opacity: 0.58;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card,
+  .login-card .brand-mark,
+  .login-card > .eyebrow,
+  .login-card > h1,
+  .login-card > .lead,
+  .auth-switch,
+  .auth-form,
+  .login-card.authenticating::after,
+  .auth-progress {
+    animation: none;
   }
 }

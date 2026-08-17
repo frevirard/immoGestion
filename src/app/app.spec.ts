@@ -29,7 +29,7 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const loginInputs = Array.from(compiled.querySelectorAll<HTMLInputElement>('.auth-form input'));
 
-    expect(compiled.textContent).toContain('Un espace clair pour suivre tes biens.');
+    expect(compiled.textContent).toContain('Trouve, publie et échange autour de l’immobilier.');
     expect(compiled.querySelector('form')).toBeTruthy();
     expect(compiled.querySelector('button[type="submit"]')?.textContent).toContain('Se connecter');
     expect(loginInputs.map((input) => input.value)).toEqual(['', '']);
